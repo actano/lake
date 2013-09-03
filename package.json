@@ -1,0 +1,44 @@
+{
+  "name": "lake",
+  "version": "0.0.2",
+  "description": "an extremely opinionated make-based build tool for complex, modular coffeescript projects",
+  "main": "lib/index.js",
+  "bin": {
+    "lake": "./bin/lake"
+  },
+  "contributors": [
+    "Bastian Albers (http://github.com/bastianalbers)",
+    "Anton Wilhelm <timaschew@gmail.com> (http://github.com/timaschew)",
+    "Andreas Rotter (http://github.com/andirotter)",
+    "Philipp Thürwächter (http://github.com/pithu)",
+    "Jan Bölsche <jan@lagomorph.de> (http://github.com/regular)"
+  ],
+  "scripts": {
+    "build": "coffee -c lib/",
+    "clean": "rm lib/*.js test/*.js",
+    "prepublish": "npm run build",
+    "postpublish": "npm run clean",
+    "test": "mocha --compilers coffee:coffee-script"
+  },
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "coffee-script": "~1.6.3",
+    "nconf": "~0.6.7",
+    "underscore": "~1.4.4",
+    "debug": "~0.7.2",
+    "mkdirp": "~0.3.5",
+    "carrier": "~0.1.10",
+    "findup-sync": "~0.1.2",
+    "nopt": "~2.1.1",
+    "once": "~1.1.1",
+    "eco": "~1.1.0-rc-3",
+    "js2coffee": "~0.1.4",
+    "async": "~0.2.9"
+  },
+  "devDependencies": {
+    "chai": "1.5.x",
+    "mocha": "~1.8.1",
+    "difflet": "~0.2.6",
+    "dive": "~0.3.0"
+  }
+}

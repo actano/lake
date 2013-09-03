@@ -1,0 +1,99 @@
+module.exports =
+
+    name: "<%- @NAME %>"
+    version: "0.0.1"
+
+    license: "MIT"
+    description: "<%- @DESCRIPTION %>"
+    keywords: []
+
+    documentation: ["Readme.md", "History.md"]
+    library: true
+    
+    htdocs:
+        page:
+            html: ["views/demo.jade"]
+            dependencies:
+                templates: ["views/markup.jade","../views/page.jade"]
+            images: []
+
+        widget:
+            html: ["views/widget.jade"]
+            dependencies:
+                templates: ["views/markup.jade","../views/widget.jade"]
+            images: []
+
+    ###
+    ##  Client-side stuff ends up in component.json
+    ## and will be processed by component-build
+    ###
+
+    client:
+        dependencies:
+            production:
+                remote:
+                    "component/dom": "*"
+                    "regular/subdom": "*"
+                    "visionmedia/debug": "*"
+                    "visionmedia/superagent": "*"
+
+                local: [
+                    "../styles"
+                    "../bind-jade"
+                    "../views"
+                ]
+
+            development:
+                remote:
+                    "visionmedia/mocha": "*"
+                    "chaijs/chai": "*"
+
+        scripts: ["client.coffee"]
+        main: "client.coffee"
+        styles: ["styles/<%- @NAME %>.styl"]
+        templates: []
+        views:
+            dirs: ["views"]
+
+        tests:
+            # A single test.html file is created from the specified template.
+            # It contains script tags for
+            # all files mentioned under 'scripts'
+            # This generated HTML file is then loaded into a headless browser
+            # (phantomjs) and the tests are executed with mocha.
+
+            browser:
+                template: "test/test.jade"
+                preequisits:
+                    "visionmedia/mocha": ["mocha.js", "mocha.css"]
+                    "chaijs/chai": ["chai.js"]
+                scripts: [
+                    "test/<%- @NAME %>-browser.coffee"
+                ]
+
+            mocha: [
+                "test/<%- @NAME %>-phantom.coffee"
+            ]
+
+    server:
+        scripts:
+            files: ["server.coffee", "index.coffee"] # must be a file
+        mountPoint: "/<%- @NAME %>"
+        tests:
+            integration: [
+                "test/<%- @NAME %>-integration.coffee"
+            ]
+            unit: [
+                "test/<%- @NAME %>-unit.coffee"
+            ]
+
+    database:
+        designDocuments: []
+        bucket: []
+
+
+
+
+
+
+

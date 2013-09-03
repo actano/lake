@@ -1,0 +1,12 @@
+extends ../../views/page
+include markup
+
+append styles
+    link(rel="stylesheet", type="text/css", href="<%- @NAME %>.css")
+
+append scripts
+    script(src="<%- @NAME %>.js")
+block body
+    .subdom(name="<%- @NAME %>")
+        mixin markup
+
