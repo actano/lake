@@ -3,7 +3,6 @@
 fs = require 'fs'
 path = require 'path'
 async = require 'async'
-{Sink} = require 'pipette'
 {inspect} = require 'util'
 coffee = require 'coffee-script'
 {_} = require 'underscore'
@@ -70,7 +69,8 @@ processPaths = (manifest, projectRoot, manifestPath, componentPath, sourceFilePr
             # because it reflects the structure that component build expects.
             absolutePath = path.join projectRoot, "build", "local_components", relativeToProjectRoot
 
-            relativeToComponentJson = path.relative absoluteComponentPath, absolutePath
+            #relative to component.json
+            path.relative absoluteComponentPath, absolutePath
 
     processedPaths.main = if manifest.client?.main?.length
         convertFileType( path.join(sourceFilePrefix, manifest.client.main))
@@ -114,8 +114,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
     {sourceFilePrefix} = options
     sourceFilePrefix ?= '.'
 
-    manifest = fs.readFileSync manifestPath
-    manifest = coffee.eval manifest.toString()
+    manifest = require path.resolve manifestPath
 
     processedPaths = processPaths manifest, projectRoot, manifestPath, componentPath, sourceFilePrefix
 
