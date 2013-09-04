@@ -39,7 +39,9 @@ processFile = ({filepath, destPath, replacements}, cb) ->
 copyFiles = (src, dest, replacements, cb) ->
     cb = once cb
     q = async.queue processFile, 1
-    q.drain = cb
+    q.drain = ->
+        debug "cb() by drain"
+        cb()
 
     dive src, { all: true }, (err, filepath) ->
         if err? then throw err
@@ -51,10 +53,10 @@ copyFiles = (src, dest, replacements, cb) ->
         relativeDestPath = replaceFilename relativeSrcPath, replacements
         destPath = path.join dest, relativeDestPath
 
-        q.push {filepath, destPath, replacements}
+        q.push {filepath, destPath, replacements}, ->
+            debug "queue item: #{filepath} finished"
 
-    , (err) ->
-        if err? then return cb err
+    # DO NOT call cb() by dive, the callback will be fired too early!
 
 replaceFilename = (content,replacements) ->
     for key, value of replacements
@@ -127,18 +129,14 @@ if require.main is module
         console.log ""
         process.exit 1
 
-    findProjectRoot (err, projectRoot) ->
+
+    main name, libPrefix, parsed.description, (err) ->
         if err?
             console.error err
-            proces.exit 1
+            process.exit 1
 
-        main name, libPrefix, parsed.description, (err) ->
-            if err?
-                console.error err
-                process.exit 1
-
-            debug "feature creation finished"
-            process.exit 0
+        debug "feature creation finished"
+        process.exit 0
 
 
 module.exports = main
