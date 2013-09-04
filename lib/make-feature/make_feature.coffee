@@ -15,8 +15,9 @@ once = require "once"
 async = require "async"
 eco = require "eco"
 debug = require('debug')('make-feature')
-{findProjectRoot} = require '../file-locator'
 {_} = require 'underscore'
+
+{findProjectRoot} = require '../file-locator'
 
 
 processFile = ({filepath, destPath, replacements}, cb) ->

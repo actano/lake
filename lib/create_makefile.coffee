@@ -99,7 +99,8 @@ createMakefiles = (cb) ->
 
                 cb err, projectRoot, eco.render template,
                     binPath: binPath
-                    toolPath: path.join projectRoot, "tools"
+                    # refactor this, extract name
+                    toolPath: path.join projectRoot, "lib"
                     includes: makeFileIncPathList
                     globalTargets: globalTargets
 

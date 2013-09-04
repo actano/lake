@@ -213,8 +213,10 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
     makefileLines = []
 
     libPrefix = path.relative projectRoot, cwd
+
+    # TODO: refactor this
     binPath = path.join projectRoot, "node_modules", ".bin"
-    toolPath = path.join projectRoot, "tools"
+    toolPath = path.join projectRoot, "lib"
 
     async.waterfall [
         (cb) ->
@@ -236,7 +238,8 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                     preequisits: ["#{libPrefix}/Manifest.coffee"]
                     actions: [
                         "mkdir -p #{libPrefix}/build"
-                        "#{projectRoot}/tools/create_component_json.coffee $< $@"
+                        # refactor this, extraact names
+                        "#{projectRoot}/lib/create_component_json.coffee $< $@"
                     ]
                 # TODO component.json is only required for the feature index.coffee, better generate the index.coffee
                 runtimeTargets.push [path.join(libPrefix, "component.json"), targetPath]

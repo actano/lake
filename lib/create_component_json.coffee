@@ -8,7 +8,8 @@ coffee = require 'coffee-script'
 {_} = require 'underscore'
 nopt = require 'nopt'
 debug = require('debug')('create-component.json')
-{findProjectRoot} = require('./lib/file-locator')
+
+{findProjectRoot} = require('./file-locator')
 
 debug "require done"
 

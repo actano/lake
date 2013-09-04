@@ -5,12 +5,13 @@ path = require 'path'
 {Sink} = require 'pipette'
 coffee = require 'coffee-script'
 {_} = require 'underscore'
-Glob = require '../lib/globber'
 async = require 'async'
 {inspect} = require 'util'
 eco = require 'eco'
 js2c = require 'js2coffee'
 debug = require('debug')('manifest-generator')
+
+Glob = require './globber'
 
 
 EXTENSION_MAPPING =
