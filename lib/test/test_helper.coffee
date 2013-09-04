@@ -2,10 +2,10 @@ async = require 'async'
 fs = require 'fs'
 path = require 'path'
 {expect} = require 'chai'
-debug = require('debug')('acano.rplanx.make-featre.testcases')
-{findProjectRoot} = require '../../lib/file-locator'
+debug = require('debug')('test-helper')
 {spawn} = require('child_process')
 
+{findProjectRoot} = require '../file-locator'
 
 fileExists = (filePath, cb) ->
     fs.stat filePath, (err, stat) ->
@@ -62,7 +62,8 @@ module.exports.lmake = (env, target, outerCb) ->
 
         (projectRoot, cb) ->
             env.libPath = path.join projectRoot, env.libPrefix, env.name
-            localMake = path.join projectRoot, 'tools', 'local-make'
+            # TODO: refactor, extract names
+            localMake = path.join projectRoot, 'lib', 'local-make'
             opt = {cwd: env.libPath}
             lmake = spawn localMake, arg, opt
             debug "lmake spawned with args: #{arg} and cwd: #{opt.cwd}"
