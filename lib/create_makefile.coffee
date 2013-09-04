@@ -67,6 +67,16 @@ createMakefiles = (cb) ->
 
             globber.on 'match', (filePath) ->
                 target = path.join subfolder, path.dirname(filePath)
+                # manifest syntax check
+                try
+                    m = require path.join projectRoot, target, 'Manifest.coffee'
+                    if _(m).isEmpty()
+                        throw new Error 'Manifest is empty or has no module.exports'
+                catch err
+                    err.message = "Error in Manifest #{filePath}: #{err.message}"
+                    debug err.message
+                    throw err
+
                 q.push target, (err, relativePath) ->
                     if not err?
                         debug "created #{relativePath}"

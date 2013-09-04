@@ -171,7 +171,7 @@ generateManifest = (component, cwd = ".", cb) ->
             lookupArray = (key) -> inspect lookup key, []
             lookupObject = (key) -> inspect lookup key, {}
 
-            htmlBaseName = if component.coffeetable_library then 'demo' else 'index'
+            htmlBaseName = 'demo'
 
 
             differenceElements = globbedFiles.unitTests.concat globbedFiles.browserTests, globbedFiles.integrationTests, globbedFiles.mochaTests
@@ -209,7 +209,6 @@ generateManifest = (component, cwd = ".", cb) ->
                 license: #{lookup 'licence',  "MIT"},
                 description: #{lookup 'description', ""},
                 keywords: #{lookupArray 'keywords'},
-                library: #{lookup 'coffeetable_library', false},
                 htdocs: {
                     page: {
                         html: #{inspect(filterExistingFiles ["views/"+htmlBaseName+".jade"])},
