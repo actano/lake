@@ -1,5 +1,4 @@
 dom = require 'dom'
-bindTemplate = require "bind-jade"
 myWidgets = require('subdom')("<%- @NAME %>")
 request = require 'superagent'
 

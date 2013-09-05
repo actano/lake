@@ -2,7 +2,13 @@ path = require 'path'
 http = require 'http'
 express = require 'express'
 
-config = require '../config'
+# extract the config into a file and use nconf for example
+config =
+    keys:
+        "app:port": 8081
+
+    get : (key) ->
+        @keys[key]
 
 http_port = config.get "app:port"
 
@@ -24,7 +30,7 @@ app.get '/<%- @NAME %>', (req, res) ->
 # for rapid prototyping and testing
 
 if require.main is module
-    app.get '/', (req, res) -> res.render 'demo'
+    app.get '/', (req, res) -> res.render 'index'
 
     console.log "stand-alone server running."
     console.log "try http://localhost:#{http_port}/"
