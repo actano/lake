@@ -365,11 +365,11 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                         path: '$(BIN)/../mocha/mocha.css'
                     ,
                         target: 'sinon.js'
-                        path: 'vendor/sinon-1.6.0.js'
+                        path: 'vendor/sinon-1.7.3.js'
                         preequisits: true
                     ,
                         target: 'jquery.js'
-                        path: 'vendor/jquery-1.9.1.js'
+                        path: 'vendor/jquery-1.10.2.js'
                         preequisits: true
                     ]
 
