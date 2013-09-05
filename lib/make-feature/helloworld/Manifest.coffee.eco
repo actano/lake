@@ -14,13 +14,13 @@ module.exports =
         page:
             html: ["views/demo.jade"]
             dependencies:
-                templates: ["views/markup.jade","../views/page.jade"]
+                templates: ["views/markup.jade"]
             images: []
 
         widget:
             html: ["views/widget.jade"]
             dependencies:
-                templates: ["views/markup.jade","../views/widget.jade"]
+                templates: ["views/markup.jade"]
             images: []
 
     ###
@@ -37,11 +37,7 @@ module.exports =
                     "visionmedia/debug": "*"
                     "visionmedia/superagent": "*"
 
-                local: [
-                    "../styles"
-                    "../bind-jade"
-                    "../views"
-                ]
+                local: []
 
             development:
                 remote:
@@ -63,10 +59,19 @@ module.exports =
             # (phantomjs) and the tests are executed with mocha.
 
             browser:
-                template: "test/test.jade"
-                preequisits:
-                    "visionmedia/mocha": ["mocha.js", "mocha.css"]
-                    "chaijs/chai": ["chai.js"]
+                html: "test/test.jade"
+                prerequisits: ["views/markup.jade"]
+
+                # the assets are hard coded in the create_local_makefile_inc
+                # so currently it's not parsed
+                assets:
+                    styles: ["build/components/visionmedia-mocha/mocha.css"]
+                    scripts: [
+                        "build/components/visionmedia-mocha/mocha.js",
+                        "build/components/chaijs-chai/lib/chai.js",
+                        "../../vendor/sinon-1.6.0.js",
+                        "../../vendor/jquery-1.9.1.js"
+                    ]
                 scripts: [
                     "test/<%- @NAME %>-browser.coffee"
                 ]

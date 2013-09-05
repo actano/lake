@@ -214,10 +214,6 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
 
     libPrefix = path.relative projectRoot, cwd
 
-    # TODO: refactor this
-    binPath = path.join projectRoot, "node_modules", ".bin"
-    toolPath = path.join projectRoot, "lib"
-
     async.waterfall [
         (cb) ->
             targets = []
@@ -238,7 +234,7 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                     preequisits: ["#{libPrefix}/Manifest.coffee"]
                     actions: [
                         "mkdir -p #{libPrefix}/build"
-                        # refactor this, extraact names
+                        # refactor this, extract names
                         "#{projectRoot}/lib/create_component_json.coffee $< $@"
                     ]
                 # TODO component.json is only required for the feature index.coffee, better generate the index.coffee
@@ -336,13 +332,14 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                             "$(COFFEEC) -c $(COFFEE_FLAGS) --output #{path.join libPrefix, "build", relFeaturePath} $<"
                         ]
 
-                if manifest.client.tests.browser.template?.length
+                if manifest.client.tests.browser.html?.length
 
                     browserTestTemplatesPreequisit = []
 
-                    browserTestTemplatesPreequisit.push path.join libPrefix, manifest.client.tests.browser.template
-                    browserTestTemplatesPreequisit.push path.join libPrefix, "views/markup.jade"
-                    browserTestTemplatesPreequisit.push path.join projectRoot, "lib/views/page.jade"
+                    browserTestTemplatesPreequisit.push path.join libPrefix, manifest.client.tests.browser.html
+
+                    browserTestTemplatesPreequisit.concat _(manifest.client.tests.browser.prerequisits).map (item) ->
+                        path.join libPrefix, item
 
                     testTemplateTarget = path.join libPrefix, BUILD_DIR, "test.html"
                     targets.push testTemplateTarget
@@ -450,15 +447,15 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                 for htmlDoc in manifest.htdocs.page.html
 
                     templateName = path.basename htmlDoc, path.extname htmlDoc
-                    templateExtension = path.extname htmlDoc
-                    preequisitPath = path.join "#{libPrefix}", path.dirname(htmlDoc)
+                    prerequisits = _(manifest.htdocs.page.dependencies.templates).map (item) ->
+                        path.join libPrefix, item
 
                     targetPath = "#{targetBuildPath}/#{templateName}.html"
                     targets.push targetPath
                     runtimeTargets.push [ targetPath, targetPath ]
                     makefileLines.push formatRule
                         targetPath: targetPath
-                        preequisits: ["#{preequisitPath}/#{templateName}#{templateExtension}","#{preequisitPath}/markup.jade","#{projectRoot}/lib/views/page.jade"]
+                        preequisits: [path.join libPrefix, htmlDoc].concat prerequisits.join ""
                         actions: [
                             "$(JADEC) $< --pretty --obj {\\\"name\\\":\\\"#{manifest.name}\\\"} --out #{targetBuildPath}"
                         ]

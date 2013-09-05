@@ -7,7 +7,6 @@ coffee = require 'coffee-script'
 {_} = require 'underscore'
 async = require 'async'
 {inspect} = require 'util'
-eco = require 'eco'
 js2c = require 'js2coffee'
 debug = require('debug')('manifest-generator')
 
