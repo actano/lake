@@ -1,0 +1,12 @@
+!!!
+html
+    body
+        h1 Welcome to RPLAN X
+        p All features on one page
+            a(href="/gallery") in the gallery
+
+        h2 The following features are installed
+        ul
+        each feature in features
+            li
+                a(href=feature.mountPoint)= feature.name + " – " + feature.description

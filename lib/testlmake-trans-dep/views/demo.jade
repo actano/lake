@@ -1,0 +1,18 @@
+extends page
+include markup
+
+append styles
+    link(rel="stylesheet", type="text/css", href="testlmake-trans-dep.css")
+
+append scripts
+    script(src="testlmake-trans-dep.js")
+    
+    :coffeescript
+        TestlmakeTransDep = require 'testlmake-trans-dep'
+        testlmake-trans-dep = new TestlmakeTransDep('.content')
+    
+block body
+    
+    mixin markup
+    
+

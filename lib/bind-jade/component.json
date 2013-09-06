@@ -1,0 +1,10 @@
+{
+  "name": "bind-jade",
+  "dependencies": {
+    "karlbohlmark/jade-runtime": "*"
+},
+  "scripts": [
+    "build/client.js"
+  ],
+  "main": "build/client.js"
+}
