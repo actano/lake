@@ -9,7 +9,7 @@ Audience
 ========
 
 Because we build lake specifically for our needs, it turns out to be rather oppinionated about the toolchain.
-If you are building a complex web application with NodeJS, Couchbase, CoffeeScript, Jade, Eco, Stylus, and Mocha, Chai, PhantomJS for testing, you might be interessted in checking out lake as an alternative to grunt, make or cake.
+If you are building a complex web application with NodeJS, Couchbase, Component, CoffeeScript, Jade, Eco, Stylus and Mocha, Chai, PhantomJS for testing, you might be interessted in checking out lake as an alternative to grunt, make or cake.
 
 Installation
 ============
