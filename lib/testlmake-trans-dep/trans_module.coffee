@@ -1,2 +1,2 @@
 module.exports =
-    key: 'I am here'
+    key: 'hi'

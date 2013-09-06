@@ -23,7 +23,3 @@ describe 'testlmake', ->
         expect(whiteSpace).to.be.equal('nowrap')
         done()
 
-    it 'test markup of a dependency after it was modified', (done) ->
-        hellodiv = $('.empty')
-        expect(hellodiv.text()).to.be.equal('I am here')
-        done()
