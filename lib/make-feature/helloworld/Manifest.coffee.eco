@@ -1,3 +1,5 @@
+JADE_TEMPLATES = ["views/markup.jade", "views/page.jade"]
+
 module.exports =
 
     name: "<%- @NAME %>"
@@ -14,7 +16,7 @@ module.exports =
         page:
             html: ["views/demo.jade"]
             dependencies:
-                templates: ["views/markup.jade"]
+                templates: JADE_TEMPLATES
             images: []
 
         widget:
@@ -59,10 +61,11 @@ module.exports =
             # (phantomjs) and the tests are executed with mocha.
 
             browser:
+                # !hardcoded
                 html: "test/test.jade"
-                prerequisits: ["views/markup.jade"]
+                prerequisits: JADE_TEMPLATES
 
-                # the assets are hard coded in the create_local_makefile_inc
+                # the assets are !hardcoded in the create_local_makefile_inc
                 # so currently it's not parsed
                 assets:
                     styles: ["build/components/visionmedia-mocha/mocha.css"]

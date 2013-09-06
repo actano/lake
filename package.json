@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "build": "coffee -c lib/",
-    "clean": "rm lib/*.js test/*.js",
+    "clean": "rm lib/*.js test/*.js make-feature/*.js",
     "prepublish": "npm run build",
     "postpublish": "npm run clean",
     "test": "mocha --compilers coffee:coffee-script"
@@ -33,7 +33,16 @@
     "once": "~1.1.1",
     "eco": "~1.1.0-rc-3",
     "js2coffee": "~0.1.4",
-    "async": "~0.2.9"
+    "async": "~0.2.9",
+    "pipette": "~0.9.3",
+    "component": "~0.17.2",
+    "stylus": "~0.37.0",
+    "nib": "~1.0.1",
+    "jade": "~0.28.1",
+    "express": "~3.3.8",
+    "supertest": "~0.7.1",
+    "mocha-phantomjs": "~3.1.2",
+    "phantom": "~0.5.2"
   },
   "devDependencies": {
     "chai": "1.5.x",

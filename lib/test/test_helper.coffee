@@ -52,7 +52,7 @@ module.exports.manifest =  (manifest, env, cb) ->
     cb()
 
 module.exports.lmake = (env, target, outerCb) ->
-    debug 'lmake test started ...'
+    debug 'lake test started ...'
     arg = [target]
 
     async.waterfall [
@@ -63,10 +63,10 @@ module.exports.lmake = (env, target, outerCb) ->
         (projectRoot, cb) ->
             env.libPath = path.join projectRoot, env.libPrefix, env.name
             # TODO: refactor, extract names
-            localMake = path.join projectRoot, 'lib', 'local-make'
+            localMake = path.join projectRoot, 'bin', 'lake'
             opt = {cwd: env.libPath}
             lmake = spawn localMake, arg, opt
-            debug "lmake spawned with args: #{arg} and cwd: #{opt.cwd}"
+            debug "lake spawned with args: #{arg} and cwd: #{opt.cwd}"
             #lmake.stdout.pipe(process.stdout, { end: false });
             lmake.on 'exit', (exitCode) ->
                 cb(null, exitCode)

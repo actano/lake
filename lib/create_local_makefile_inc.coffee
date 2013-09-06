@@ -450,12 +450,14 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                     prerequisits = _(manifest.htdocs.page.dependencies.templates).map (item) ->
                         path.join libPrefix, item
 
+                    prerequisits.unshift path.join libPrefix, htmlDoc
+
                     targetPath = "#{targetBuildPath}/#{templateName}.html"
                     targets.push targetPath
                     runtimeTargets.push [ targetPath, targetPath ]
                     makefileLines.push formatRule
                         targetPath: targetPath
-                        preequisits: [path.join libPrefix, htmlDoc].concat prerequisits.join ""
+                        preequisits: prerequisits
                         actions: [
                             "$(JADEC) $< --pretty --obj {\\\"name\\\":\\\"#{manifest.name}\\\"} --out #{targetBuildPath}"
                         ]
