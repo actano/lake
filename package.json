@@ -1,6 +1,6 @@
 {
   "name": "lake",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "a very oppinionated make-based build tool for complex and modular web applications that run on NodeJS",
   "main": "lib/index.js",
   "bin": {
@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "build": "coffee -c lib/",
-    "clean": "rm lib/*.js test/*.js make-feature/*.js",
+    "clean": "rm lib/*.js lib/test/*.js lib/make-feature/*.js",
     "prepublish": "npm run build",
     "postpublish": "npm run clean",
     "test": "mocha --compilers coffee:coffee-script"
