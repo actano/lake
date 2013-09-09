@@ -11,7 +11,6 @@ eco = require 'eco'
 {_} = require 'underscore'
 
 createLocalMakefileInc = require './create_local_makefile_inc'
-Glob = require './globber'
 {findProjectRoot, locateNodeModulesBin, getDotLakeList} = require './file-locator'
 
 mergeObject = (featureTargets, globalTargets) ->
@@ -69,7 +68,7 @@ createMakefiles = (cb) ->
 
                 # manifest syntax check
                 try
-                    m = require path.join projectRoot, featurePath, 'Manifest.coffee'
+                    m = require path.join projectRoot, featurePath, 'Manifest'
                     if _(m).isEmpty()
                         throw new Error 'Manifest is empty or has no module.exports'
                 catch err
@@ -86,7 +85,6 @@ createMakefiles = (cb) ->
                         message = "failed to create Makefile.mk for #{featurePath}: #{err}"
                         debug message
                         # we have to make sure that the callback is only called once
-                        globber.removeAllListeners()
                         cb new Error message
 
             , (err) ->

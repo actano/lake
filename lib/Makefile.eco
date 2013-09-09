@@ -2,7 +2,7 @@
 # created on <%- new Date() %>
 
 BIN          := <%- @binPath %>
-TOOLS        := lib
+TOOLS        := out
 
 COFFEEC      := $(BIN)/coffee
 STYLUSC      := $(BIN)/stylus

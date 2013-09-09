@@ -13,10 +13,12 @@ fs = require 'fs'
 
 testcases = require '../../../test/test_helper'
 
+projectRoot = undefined
+
 env =
     name: 'testlmake'
     library: true
-    libPrefix: 'lib/integrationtest'
+    libPrefix: null #'lib/integrationtest'
     depName: 'testlmake-dep'
     transDepName: 'testlmake-trans-dep'
 
@@ -25,44 +27,45 @@ describe 'testlmake feature dependencies', ->
 
     before (done) ->
         @timeout 10000
-        #lake with default target
-        testcases.lmake env, '', done
+
+        # init project root
+        findProjectRoot (err, pr) ->
+            if err then return done(err)
+            projectRoot = pr
+            env.libPrefix = path.relative(projectRoot, path.join(__dirname, '../..'))
+
+            #lake with default target
+            testcases.lmake env, '', done
 
     beforeEach (done) ->
-        async.waterfall [
 
-            (cb) ->
-                findProjectRoot cb
+        transDepFeaturePath = path.join projectRoot, env.libPrefix, env.transDepName
+        stylusFile = path.join transDepFeaturePath, "styles", "#{env.transDepName}.styl"
+        stylusFileTemplateFile = path.join transDepFeaturePath, "styles", "#{env.transDepName}_template.styl"
 
-            (projectRoot, cb) ->
+        fileContent = fs.readFileSync stylusFileTemplateFile, 'utf8'
+        fs.writeFileSync stylusFile, fileContent
 
-                transDepFeaturePath = path.join projectRoot, env.libPrefix, env.transDepName
-                stylusFile = path.join transDepFeaturePath, "styles", "#{env.transDepName}.styl"
-                stylusFileTemplateFile = path.join transDepFeaturePath, "styles", "#{env.transDepName}_template.styl"
+        dummyPartialFile = path.join transDepFeaturePath, "views", "dummy-partial.jade"
+        fs.writeFileSync dummyPartialFile, ".empty= key\n"
 
-                fileContent = fs.readFileSync stylusFileTemplateFile, 'utf8'
-                fs.writeFileSync stylusFile, fileContent
+        moduleContent = """
+        module.exports =
+            key: 'hi'
+        """
+        moduleFile = path.join transDepFeaturePath, "trans_module.coffee"
+        fs.writeFileSync moduleFile, moduleContent
 
-                dummyPartialFile = path.join transDepFeaturePath, "views", "dummy-partial.jade"
-                fs.writeFileSync dummyPartialFile, ".empty= key\n"
+        libPath = path.join projectRoot, env.libPrefix, env.name
 
-                moduleContent = """
-                module.exports =
-                    key: 'hi'
-                """
-                moduleFile = path.join transDepFeaturePath, "trans_module.coffee"
-                fs.writeFileSync moduleFile, moduleContent
+        browserTestFile = path.join libPath, "test", "testlmake-browser.coffee"
+        browserTestTemplateFile = path.join libPath, "test", "testlmake-browser_template.coffee"
 
-                libPath = path.join projectRoot, env.libPrefix, env.name
+        fileContent = fs.readFileSync browserTestTemplateFile, 'utf8'
+        fs.writeFileSync browserTestFile, fileContent
+        done()
 
-                browserTestFile = path.join libPath, "test", "testlmake-browser.coffee"
-                browserTestTemplateFile = path.join libPath, "test", "testlmake-browser_template.coffee"
 
-                fileContent = fs.readFileSync browserTestTemplateFile, 'utf8'
-                fs.writeFileSync browserTestFile, fileContent
-                cb()
-
-        ], done
 
     # TODO: make a real test
     it 'should return a friendly message from the route /helloworld', (done) ->

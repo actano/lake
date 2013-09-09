@@ -198,11 +198,12 @@ makeComponentBuildPrerequisits = (libPrefix, manifest) ->
 
 createLocalMakefileInc = (projectRoot, cwd, cb) ->
 
-    pathToManifest = path.join cwd, 'Manifest.coffee'
+    pathToManifest = path.join cwd, 'Manifest'
     manifest = null
     try
-        manifestContent = fs.readFileSync pathToManifest
-        manifest = coffee.eval manifestContent.toString()
+        #manifestContent = fs.readFileSync pathToManifest
+        #manifest = coffee.eval manifestContent.toString()
+        manifest = require pathToManifest
     catch err
         err.message = "Error in Manifest file #{pathToManifest}: #{err.message}"
         debug err.message
@@ -235,7 +236,7 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                     actions: [
                         "mkdir -p #{libPrefix}/build"
                         # refactor this, extract names
-                        "$(TOOLS)/create_component_json.coffee $< $@"
+                        "node $(TOOLS)/create_component_json.js $< $@"
                     ]
                 # TODO component.json is only required for the feature index.coffee, better generate the index.coffee
                 runtimeTargets.push [path.join(libPrefix, "component.json"), targetPath]
