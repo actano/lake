@@ -81,7 +81,7 @@ createMakefiles = (cb) ->
                     if not err?
                         debug "created #{makefileMkPath}"
                         makefileIncPathList.push makefileMkPath
-
+                        cb()
                     else
                         message = "failed to create Makefile.mk for #{featurePath}: #{err}"
                         debug message
@@ -92,6 +92,7 @@ createMakefiles = (cb) ->
             , (err) ->
                 if err?
                     return cb err
+                debug 'Makefile.mk finished for feature all features in .lake'
                 q.drain = ->
                     debug globalTargets
                     cb null, binPath, projectRoot, makefileIncPathList, globalTargets

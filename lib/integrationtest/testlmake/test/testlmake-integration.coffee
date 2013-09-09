@@ -4,19 +4,19 @@ request = require 'supertest'
 {expect} = require 'chai'
 {inspect} = require 'util'
 
-{findProjectRoot, locateNodeModulesBin} =  require '../../file-locator'
+{findProjectRoot, locateNodeModulesBin} =  require '../../../file-locator'
 path = require 'path'
 {spawn} = require 'child_process'
 async = require 'async'
 debug = require('debug')('actano.rplanx.create_local_make_inc-test')
 fs = require 'fs'
 
-testcases = require '../../test/test_helper'
+testcases = require '../../../test/test_helper'
 
 env =
     name: 'testlmake'
     library: true
-    libPrefix: 'lib'
+    libPrefix: 'lib/integrationtest'
     depName: 'testlmake-dep'
     transDepName: 'testlmake-trans-dep'
 

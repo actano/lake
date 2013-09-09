@@ -63,7 +63,7 @@ module.exports.lmake = (env, target, outerCb) ->
         (projectRoot, cb) ->
             env.libPath = path.join projectRoot, env.libPrefix, env.name
             # TODO: refactor, extract names
-            localMake = path.join projectRoot, 'bin', 'lake'
+            localMake = path.join projectRoot, 'bin', 'clake'
             opt = {cwd: env.libPath}
             lmake = spawn localMake, arg, opt
             debug "lake spawned with args: #{arg} and cwd: #{opt.cwd}"
