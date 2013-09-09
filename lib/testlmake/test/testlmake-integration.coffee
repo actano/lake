@@ -236,5 +236,39 @@ describe 'testlmake feature dependencies', ->
 
         ], done
 
+    after (done) ->
+        async.waterfall [
 
+            (cb) ->
+                findProjectRoot cb
+
+            (projectRoot, cb) ->
+
+                transDepFeaturePath = path.join projectRoot, env.libPrefix, env.transDepName
+                stylusFile = path.join transDepFeaturePath, "styles", "#{env.transDepName}.styl"
+                stylusFileTemplateFile = path.join transDepFeaturePath, "styles", "#{env.transDepName}_template.styl"
+
+                fileContent = fs.readFileSync stylusFileTemplateFile, 'utf8'
+                fs.writeFileSync stylusFile, fileContent
+
+                dummyPartialFile = path.join transDepFeaturePath, "views", "dummy-partial.jade"
+                fs.writeFileSync dummyPartialFile, ".empty= key\n"
+
+                moduleContent = """
+                module.exports =
+                    key: 'hi'
+                """
+                moduleFile = path.join transDepFeaturePath, "trans_module.coffee"
+                fs.writeFileSync moduleFile, moduleContent
+
+                libPath = path.join projectRoot, env.libPrefix, env.name
+
+                browserTestFile = path.join libPath, "test", "testlmake-browser.coffee"
+                browserTestTemplateFile = path.join libPath, "test", "testlmake-browser_template.coffee"
+
+                fileContent = fs.readFileSync browserTestTemplateFile, 'utf8'
+                fs.writeFileSync browserTestFile, fileContent
+                cb()
+
+        ], done
 
