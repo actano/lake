@@ -1,4 +1,4 @@
-JADE_TEMPLATES = ["views/markup.jade", "../../testlmake-trans-dep/views/page"]
+JADE_TEMPLATES = ["views/markup.jade", "../testlmake-trans-dep/views/page.jade"]
 
 module.exports =
 
