@@ -11,10 +11,8 @@ eco = require 'eco'
 {_} = require 'underscore'
 
 createLocalMakefileInc = require './create_local_makefile_inc'
-Glob = require '../lib/globber'
-{findProjectRoot, locateNodeModulesBin} = require './file-locator'
-
-subfolder = "lib"
+Glob = require './globber'
+{findProjectRoot, locateNodeModulesBin, getDotLakeList} = require './file-locator'
 
 mergeObject = (featureTargets, globalTargets) ->
     _(featureTargets).each (value, key, list) ->
@@ -38,69 +36,75 @@ createMakefiles = (cb) ->
                 cb err, binPath, projectRoot
 
         (binPath, projectRoot, cb) ->
+            getDotLakeList (err, list) ->
+                if err?
+                    return cb err
+                cb null, binPath, projectRoot, list
+
+        (binPath, projectRoot, featureList, cb) ->
+
             makefileIncPathList = []
             globalTargets = {}
 
-            options =
-                cwd: path.join projectRoot, subfolder
-
-            globber = new Glob "**/Manifest.coffee", "/components/", options
-
-            q = async.queue (target, cb) ->
-                cwd = path.join projectRoot, target
-                console.log "Creating Makefile.mk for #{target}"
+            q = async.queue (featurePath, cb) ->
+                cwd = path.join projectRoot, featurePath
+                console.log "Creating Makefile.mk for #{featurePath}"
                 createLocalMakefileInc projectRoot, cwd, (err, makefileContent, globalFeatureTargets) ->
                     if err? then return cb err
 
                     mergeObject globalFeatureTargets, globalTargets
 
-                    relativePath = path.join target, "build", "Makefile.mk"
-                    fullPath = path.join projectRoot, relativePath 
-                    buildDir = path.dirname fullPath
+                    makefileMkPath = path.join featurePath, "build", "Makefile.mk"
+                    absolutePath = path.join projectRoot, makefileMkPath
+                    buildDir = path.dirname absolutePath
                     debug "making sure #{buildDir} exists."
                     mkdirp buildDir, (err) ->
                         if err? then return cb err
-                        fs.writeFile fullPath, makefileContent, (err) ->
+                        fs.writeFile absolutePath, makefileContent, (err) ->
                             if err? then return cb err
-                            cb null, relativePath
+                            cb null, makefileMkPath
             , 1
 
-            globber.on 'match', (filePath) ->
-                target = path.join subfolder, path.dirname(filePath)
+            async.each featureList, (featurePath, cb) ->
+
                 # manifest syntax check
                 try
-                    m = require path.join projectRoot, target, 'Manifest.coffee'
+                    m = require path.join projectRoot, featurePath, 'Manifest.coffee'
                     if _(m).isEmpty()
                         throw new Error 'Manifest is empty or has no module.exports'
                 catch err
-                    err.message = "Error in Manifest #{filePath}: #{err.message}"
+                    err.message = "Error in Manifest #{featurePath}: #{err.message}"
                     debug err.message
                     throw err
 
-                q.push target, (err, relativePath) ->
+                q.push featurePath, (err, makefileMkPath) ->
                     if not err?
-                        debug "created #{relativePath}"
-                        makefileIncPathList.push relativePath
+                        debug "created #{makefileMkPath}"
+                        makefileIncPathList.push makefileMkPath
 
                     else
-                        message = "failed to create Makefile.mk for #{target}: #{err}"
+                        message = "failed to create Makefile.mk for #{featurePath}: #{err}"
                         debug message
                         # we have to make sure that the callback is only called once
                         globber.removeAllListeners()
                         cb new Error message
 
-            globber.on 'end', (err) ->
+            , (err) ->
+                if err?
+                    return cb err
                 q.drain = ->
                     debug globalTargets
-                    cb err, binPath, projectRoot, makefileIncPathList, globalTargets
+                    cb null, binPath, projectRoot, makefileIncPathList, globalTargets
+
 
         (binPath, projectRoot, makeFileIncPathList, globalTargets, cb) ->
             fs.readFile "#{__dirname}/Makefile.eco", "utf-8", (err, template) ->
-
+                if err?
+                    console.error err
+                    return err
                 cb err, projectRoot, eco.render template,
                     binPath: binPath
-                    # refactor this, extract name
-                    toolPath: path.join projectRoot, "lib"
+
                     includes: makeFileIncPathList
                     globalTargets: globalTargets
 

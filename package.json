@@ -14,8 +14,8 @@
     "Jan Bölsche <jan@lagomorph.de> (http://github.com/regular)"
   ],
   "scripts": {
-    "build": "coffee -c lib/",
-    "clean": "rm lib/*.js lib/test/*.js lib/make-feature/*.js",
+    "build": "./build.sh",
+    "clean": "rm -rf out",
     "prepublish": "npm run build",
     "postpublish": "npm run clean",
     "test": "npm run build; bin/lake lib/testlmake/integration_test"

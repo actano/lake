@@ -1,0 +1,5 @@
+lib/integrationtest/bind-jade
+lib/integrationtest/config
+lib/integrationtest/testlmake
+lib/integrationtest/testlmake-dep
+lib/integrationtest/testlmake-trans-dep

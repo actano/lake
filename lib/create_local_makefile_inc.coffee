@@ -235,7 +235,7 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                     actions: [
                         "mkdir -p #{libPrefix}/build"
                         # refactor this, extract names
-                        "#{projectRoot}/lib/create_component_json.coffee $< $@"
+                        "$(TOOLS)/create_component_json.coffee $< $@"
                     ]
                 # TODO component.json is only required for the feature index.coffee, better generate the index.coffee
                 runtimeTargets.push [path.join(libPrefix, "component.json"), targetPath]
@@ -260,7 +260,10 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                 if manifest.client.dependencies?.production?.local?
 
                     for localDependency in manifest.client.dependencies.production.local
-                        localComponents.push path.join 'lib/', path.basename localDependency
+                        absolutePath = path.resolve projectRoot, libPrefix, localDependency
+                        relativePath = path.relative projectRoot, absolutePath
+
+                        localComponents.push relativePath
 
                     debug "localComponents are #{localComponents}"
 

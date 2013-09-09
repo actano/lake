@@ -9,7 +9,7 @@ difflet = require('difflet')({indent: 4});
 js2c = require "js2coffee"
 {inspect} = require 'util'
 {_} = require "underscore"
-Glob = require "../lib/globber"
+Glob = require "./globber"
 
 
 createManifest = (absolutePath, outputDirectory, outputFileName, outerCb) ->
