@@ -18,7 +18,7 @@ projectRoot = null
 
 makeFeatureScript = '../make-feature/make_feature.coffee'
 
-describe 'intergration test for create local makefile inc', ->
+describe 'testing lake by creating a boilerplate feature and calling lake', ->
 
     before (done) ->
         findProjectRoot (err, pr) ->
@@ -84,6 +84,7 @@ describe 'integration test by makefeature API', ->
             done()
 
     after (done) ->
-        exec "rm -rf #{env.libPath}", (err)->
-            console.error err
+        exec "rm -rf #{env.libPath}", (err) ->
+            if err?
+                console.error err
             done()

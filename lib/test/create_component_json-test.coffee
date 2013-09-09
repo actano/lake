@@ -33,7 +33,7 @@ sourceComponent =
         "chaijs/chai" : "*",
 
     license: "MIT"
-    paths: ["../../../build/local_components/tools"]
+    paths: ["../../../build/local_components/lib"]
     local: ["styles", "bind-jade"]
     scripts: ["client.js", "views/popover.js"]
     main: "client.js"

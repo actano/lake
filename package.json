@@ -18,7 +18,7 @@
     "clean": "rm lib/*.js lib/test/*.js lib/make-feature/*.js",
     "prepublish": "npm run build",
     "postpublish": "npm run clean",
-    "test": "mocha --compilers coffee:coffee-script"
+    "test": "npm run build; bin/lake lib/testlmake/integration_test"
   },
   "readmeFilename": "README.md",
   "dependencies": {

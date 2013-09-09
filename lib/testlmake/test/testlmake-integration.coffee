@@ -23,6 +23,11 @@ env =
 
 describe 'testlmake feature dependencies', ->
 
+    before (done) ->
+        @timeout 10000
+        #lake with default target
+        testcases.lmake env, '', done
+
     beforeEach (done) ->
         async.waterfall [
 
