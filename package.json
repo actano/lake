@@ -42,7 +42,8 @@
     "express": "~3.3.8",
     "supertest": "~0.7.1",
     "mocha-phantomjs": "~3.1.2",
-    "phantom": "~0.5.2"
+    "phantom": "~0.5.2",
+    "phantomjs": "~1.9.2-0"
   },
   "devDependencies": {
     "chai": "1.5.x",
