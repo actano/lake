@@ -8,7 +8,7 @@ a very oppinionated make-based build tool for complex and modular web applicatio
 Audience
 ========
 
-Because we build lake specifically for our needs, it turns out to be rather oppinionated about the toolchain.
+Because we build lake especifically for our needs, it turns out to be quite oppinionated about the toolchain.
 If you are building a complex web application with NodeJS, Couchbase, Component, CoffeeScript, Jade, Eco, Stylus and Mocha, Chai, PhantomJS for testing, you might be interessted in checking out lake as an alternative to grunt, make or cake.
 
 Installation
@@ -16,16 +16,16 @@ Installation
 
     npm -g install lake
 
-If you don't want to install it globally, try (this approach)[http://stackoverflow.com/a/15157360] and in addition add `alias lake="npm-exec lake"` to yout .bashrc file.
+If you don't want to install it globally, try [this approach](http://stackoverflow.com/a/15157360) and in addition add `alias lake="npm-exec lake"` to yout .bashrc file.
 
 Usage
 =====
 
     mkdir -p fancy_project/lib/featureA
     cd fancy_projcet
-    lake init
+    lake-init
     cd featureA
-    lake add .
+    lake-add .
 
 Motivation
 ==========
@@ -48,10 +48,14 @@ To solve the above problems, we decided to generate our Makefile and the files i
 Files
 =====
 
-.lake file
-----------
+.lakeconfig file
+----------------
 Stores a list of locations of Lakefiles that contribute targets to the generated Makefile.
-`lake add` adds a location to the list. Edit the file manually to delete a location.
+`lake-add` adds a location to the list. Edit the file manually to delete a location.
+
+.lake directory
+---------------
+Stores private data like generated Makefile.mk files etc. Just like the .git direcotey, you normally have no neeed to look into this.
 
 Lakefile
 --------
@@ -71,9 +75,9 @@ TODO: Lakefile format
 local targets
 =============
 To solve the clashing target name problem mentioned above, we use a module's directory as a namespace for its targets.
-In the generated Makefile `lake` prepends target names with the directory of the module they originate from. That is, it uses the relative path from a Lakefile to the .lake file as a prefix for the targets generated from that Lakefile.
+In the generated Makefile `lake` prepends target names with the directory of the module they originate from. That is, it uses the relative path from a Lakefile to the .lake directory as a prefix for the targets generated from that Lakefile.
 
-Conversely, `lake` prefixes the name of a target given on the command line with the current working directory relative to the the location of the .lake file (the project's root).
+Conversely, `lake` prefixes the name of a target given on the command line with the current working directory relative to the the location of .lake (i.e. project's root).
 
 The net effect is that you can build, test and demo the module you are currently working on in isolation.
 
@@ -83,7 +87,9 @@ Example
 directory structure
 
     fancy_project
+        .lakeconfig
         .lake
+            stuff you can ignore
         lib
             featureA
                 Lakefile
@@ -101,4 +107,4 @@ shell session
 
 Name
 ====
-We used to call it local-make, then lmake and now it is called lake.
+We used to call it local-make, then lmake and now it is called `lake`. It is not related to the LUA build tool.
