@@ -451,8 +451,10 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                 for htmlDoc in manifest.htdocs.page.html
 
                     templateName = path.basename htmlDoc, path.extname htmlDoc
-                    prerequisits = _(manifest.htdocs.page.dependencies.templates).map (item) ->
-                        path.join libPrefix, item
+                    prerequisits = []
+                    if manifest.htdocs.page.dependencies?.templates?
+                        prerequisits = _(manifest.htdocs.page.dependencies.templates).map (item) ->
+                            path.join libPrefix, item
 
                     prerequisits.unshift path.join libPrefix, htmlDoc
 
