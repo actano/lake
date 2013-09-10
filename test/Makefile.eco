@@ -15,7 +15,7 @@ ISTANBUL_TEST_RUNNER  := $(TOOLS)/mocha_istanbul_test_runner.coffee
 COMPONENT_BUILD   := $(BIN)/component-build
 COMPONENT_INSTALL := $(BIN)/component-install
 
-COMPONENT_GENERATOR := node $(TOOLS)/create_component_json
+COMPONENT_GENERATOR := node $(ROOT)/../out/create_component_json
 
 COUCHVIEW_INSTALL := $(TOOLS)/install_couch_view.coffee
 

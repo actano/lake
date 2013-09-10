@@ -2,7 +2,7 @@ path = require 'path'
 http = require 'http'
 express = require 'express'
 
-config = require '../config'
+config = require '.'
 
 http_port = config.get "app:port"
 
@@ -17,7 +17,7 @@ app.set 'views', path.join __dirname, 'views'
 app.set 'view engine', 'jade'
 
 # routes
-app.get '/testlmake-dep', (req, res) ->
+app.get '/testlmake-trans-dep', (req, res) ->
     res.json {message: "Hello World"}
 
 # if the module is run (rather than required) we start a small httpd server

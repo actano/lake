@@ -1,5 +1,5 @@
 phantom = require 'phantom'
-config = require '../../config'
+config = require '../'
 {expect} = require 'chai'
 
 ###
