@@ -4,21 +4,22 @@ request = require 'supertest'
 {expect} = require 'chai'
 {inspect} = require 'util'
 
-{findProjectRoot, locateNodeModulesBin} =  require '../../../file-locator'
+{findProjectRoot, locateNodeModulesBin} =  require '../../../../lib/file-locator'
 path = require 'path'
 {spawn} = require 'child_process'
 async = require 'async'
 debug = require('debug')('actano.rplanx.create_local_make_inc-test')
 fs = require 'fs'
 
-testcases = require '../../../test/test_helper'
+testcases = require '../../../test_helper'
 
 projectRoot = undefined
 
 env =
     name: 'testlmake'
     library: true
-    libPrefix: null #'lib/integrationtest'
+    # relative to project root
+    libPrefix: 'integrationtest'
     depName: 'testlmake-dep'
     transDepName: 'testlmake-trans-dep'
 
@@ -32,7 +33,6 @@ describe 'testlmake feature dependencies', ->
         findProjectRoot (err, pr) ->
             if err then return done(err)
             projectRoot = pr
-            env.libPrefix = path.relative(projectRoot, path.join(__dirname, '../..'))
 
             #lake with default target
             testcases.lmake env, '', done

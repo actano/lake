@@ -14,7 +14,7 @@
     "Jan Bölsche <jan@lagomorph.de> (http://github.com/regular)"
   ],
   "scripts": {
-    "build": "./build.sh",
+    "build": "./compile.sh",
     "clean": "rm -rf out",
     "prepublish": "npm run build",
     "postpublish": "npm run clean",

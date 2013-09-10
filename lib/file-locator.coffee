@@ -12,6 +12,10 @@ projectRoot = undefined
 DOT_LAKE_FILENAME = '.lake'
 
 npm_bin = (cb) ->
+    if nodeModulesBin?
+        debug "reuse npm_bin path"
+        cb null, nodeModulesBin
+    debug "spawn 'npm bin' to locate .bin path"
     exec 'npm bin', (err, stdout, stderr) ->
         cb err, stdout
 
@@ -72,13 +76,22 @@ exports.findProjectRoot = (cb) ->
 
 exports.locateNodeModulesBin = (cb) ->
     if nodeModulesBin?
+        debug "reuse locateNodeBin"
         return cb null, nodeModulesBin
     debug('painstakingly finding node_modules/.bin')
-    exports.findProjectRoot (err, result) ->
+    exports.findProjectRoot (err, projectRoot) ->
         if not err?
-            nodeModulesBin = path.join result, 'node_modules', '.bin'
-            return cb null, nodeModulesBin
-        npm_bin (err, result) ->
+            binPath = path.join projectRoot, 'node_modules', '.bin'
+            debug "try to locate .bin path: #{binPath}"
+            exists = fs.existsSync binPath
+            if exists
+                nodeModulesBin = binPath
+                return cb null, binPath
+            debug "node_modues/.bin is not in project root's directory"
+
+        npm_bin (err, binPath) ->
+            debug "use npm bin to locate .bin path"
             if err? then return cb err
-            nodeModulesBin = result
-            cb null, result
+
+            nodeModulesBin = binPath
+            return cb null, binPath

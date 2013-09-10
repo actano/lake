@@ -5,7 +5,7 @@ path = require 'path'
 debug = require('debug')('test-helper')
 {spawn} = require('child_process')
 
-{findProjectRoot} = require '../file-locator'
+{findProjectRoot, locateNodeModulesBin} = require '../lib/file-locator'
 
 fileExists = (filePath, cb) ->
     fs.stat filePath, (err, stat) ->
@@ -61,9 +61,13 @@ module.exports.lmake = (env, target, outerCb) ->
             findProjectRoot cb
 
         (projectRoot, cb) ->
+            locateNodeModulesBin (err, binPath) ->
+                cb err, projectRoot, binPath
+
+        (projectRoot, binPath, cb) ->
             env.libPath = path.join projectRoot, env.libPrefix, env.name
             # TODO: refactor, extract names
-            localMake = path.join projectRoot, 'bin', 'clake'
+            localMake = path.join binPath, '..', '..', 'bin', 'lake'
             opt = {cwd: env.libPath}
             lmake = spawn localMake, arg, opt
             debug "lake spawned with args: #{arg} and cwd: #{opt.cwd}"
