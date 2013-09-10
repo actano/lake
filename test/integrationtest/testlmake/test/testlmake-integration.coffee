@@ -4,7 +4,7 @@ request = require 'supertest'
 {expect} = require 'chai'
 {inspect} = require 'util'
 
-{findProjectRoot, locateNodeModulesBin} =  require '../../../../lib/file-locator'
+{findProjectRoot, locateNodeModulesBin} =  require '../../../../src/file-locator'
 path = require 'path'
 {spawn} = require 'child_process'
 async = require 'async'

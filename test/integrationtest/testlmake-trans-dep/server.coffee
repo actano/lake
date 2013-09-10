@@ -2,7 +2,7 @@ path = require 'path'
 http = require 'http'
 express = require 'express'
 
-config = require '.'
+config = require '../config'
 
 http_port = config.get "app:port"
 

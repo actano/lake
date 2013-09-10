@@ -3,21 +3,16 @@
 
 ROOT         := <%- @projectRoot %>
 BIN          := <%- @binPath %>
-TOOLS        := $(ROOT)/out
-
 
 COFFEEC      := $(BIN)/coffee
 STYLUSC      := $(BIN)/stylus
 JADEC        := $(BIN)/jade
 MOCHA        := $(BIN)/mocha
-ISTANBUL     := $(BIN)/istanbul
-ISTANBUL_TEST_RUNNER  := $(TOOLS)/mocha_istanbul_test_runner.coffee
+
 COMPONENT_BUILD   := $(BIN)/component-build
 COMPONENT_INSTALL := $(BIN)/component-install
 
-COMPONENT_GENERATOR := node $(ROOT)/../out/create_component_json
-
-COUCHVIEW_INSTALL := $(TOOLS)/install_couch_view.coffee
+COMPONENT_GENERATOR := node $(ROOT)/../lib/create_component_json
 
 MOCHA_REPORTER := tap
 
@@ -33,37 +28,11 @@ all: build
 
 build: <%- @globalTargets.build.join ' ' %>
 
-documentation: <%- @globalTargets.documentation?.join ' ' %>
-
-unit_test: <%- @globalTargets.unit_test?.join ' ' %>
-
-integration_test: <%- @globalTargets.integration_test?.join ' ' %>
-
-phantom_test: <%- @globalTargets.phantom_test?.join ' ' %>
-
-couchview: <%- @globalTargets.couchview?.join ' ' %>
-
-install: build <%- @globalTargets.install?.join ' ' %>
-
-pre_coverage: <%- @globalTargets.pre_coverage?.join ' ' %>
-
-coverage: build build/coverage/clean pre_coverage <%- @globalTargets.coverage?.join ' ' %>
-	$(ISTANBUL) report --root lib/  --dir build/coverage/report
-
-api_documentation: sync documentation
-	$(TOOLS)/htmldoc/dir-reader.coffee
-
 clean: build/clean <%- @globalTargets.clean.join ' ' %>
 .PHONY: clean
 
-build/clean: build/local_components/clean build/runtime/clean build/coverage/clean
+build/clean: build/local_components/clean
 
 build/local_components/clean:
 	rm -rf build/local_components
-
-build/runtime/clean:
-	rm -rf build/runtime
-
-build/coverage/clean:
-	rm -rf build/coverage
 

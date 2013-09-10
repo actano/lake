@@ -5,9 +5,9 @@ async = require 'async'
 debug = require('debug')('local-make.test')
 {expect} = require 'chai'
 
-makeFeature = require '../make-feature/make_feature'
+makeFeature = require '../src/make-feature/make_feature'
 testcases = require './test_helper'
-{findProjectRoot} =  require '../file-locator'
+{findProjectRoot} =  require '../src/file-locator'
 
 env =
     name: 'my-funky_feature'

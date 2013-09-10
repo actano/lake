@@ -6,9 +6,9 @@ debug = require('debug')('manifest-generator.test')
 coffee = require 'coffee-script'
 fs = require 'fs'
 
-{findProjectRoot} = require('../file-locator')
-manifestGenerator = require "../create_manifest"
-componentGenerator = require "../create_component_json"
+{findProjectRoot} = require "../src/file-locator"
+manifestGenerator = require "../src/create_manifest"
+componentGenerator = require "../src/create_component_json"
 
 sourceManifest = """
 module.exports =

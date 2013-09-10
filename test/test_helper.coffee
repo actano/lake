@@ -5,7 +5,7 @@ path = require 'path'
 debug = require('debug')('test-helper')
 {spawn} = require('child_process')
 
-{findProjectRoot, locateNodeModulesBin} = require '../lib/file-locator'
+{findProjectRoot, locateNodeModulesBin} = require '../src/file-locator'
 
 fileExists = (filePath, cb) ->
     fs.stat filePath, (err, stat) ->

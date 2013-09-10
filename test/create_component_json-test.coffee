@@ -6,9 +6,9 @@ js2c = require "js2coffee"
 debug = require('debug')('component-generator.test')
 {expect} = require "chai"
 
-{findProjectRoot} = require('../file-locator')
-manifestGenerator = require "../create_manifest"
-componentGenerator = require "../create_component_json"
+{findProjectRoot} = require "../src/file-locator"
+manifestGenerator = require "../src/create_manifest"
+componentGenerator = require "../src/create_component_json"
 
 sourceComponent =
     name: "feature name"
