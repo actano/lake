@@ -26,10 +26,16 @@ Usage
     lake-init
     cd featureA
     lake-add .
+    lake
+    # builds featureA
+    cd ..
+    lake
+    # builds all features
+
 
 Motivation
 ==========
-We used to build our application with gtunt. However, that didn't scale. Grunt has no internal mechanism of finding out whether a certain file needs to be updated; it uncinditionally runs all steps of a task. If a project reaches a certain complexity, this just takes too much time.
+We used to build our application with gtunt. HThat didn't scale to well. Grunt has no internal mechanism of finding out whether a certain file needs to be updated; it uncinditionally runs all steps of a task. If a project reaches a certain complexity, this just takes too much time.
 
 `make` solved this problem a long time ago. Instead of imperatively defining a set of tasks to be run in sequence, you declare a dependency graph along with a set of actions that create target files from a list of source files. `make` than figures out what actions need to run in order to create or update the target files. This approach is way more efficient.
 
