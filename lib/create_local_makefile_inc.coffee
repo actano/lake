@@ -236,7 +236,7 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                     actions: [
                         "mkdir -p #{libPrefix}/build"
                         # refactor this, extract names
-                        "node $(TOOLS)/create_component_json.js $< $@"
+                        "$(COMPONENT_GENERATOR) $< $@"
                     ]
                 # TODO component.json is only required for the feature index.coffee, better generate the index.coffee
                 runtimeTargets.push [path.join(libPrefix, "component.json"), targetPath]

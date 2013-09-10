@@ -97,13 +97,13 @@ createMakefiles = (cb) ->
 
 
         (binPath, projectRoot, makeFileIncPathList, globalTargets, cb) ->
-            fs.readFile "#{__dirname}/Makefile.eco", "utf-8", (err, template) ->
+            fs.readFile path.join(projectRoot, 'Makefile.eco'), 'utf-8', (err, template) ->
                 if err?
                     console.error err
                     return err
                 cb err, projectRoot, eco.render template,
                     binPath: binPath
-
+                    projectRoot: projectRoot
                     includes: makeFileIncPathList
                     globalTargets: globalTargets
 

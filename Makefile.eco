@@ -1,8 +1,10 @@
 # this file is machine-generated. DO NOT EDIT
 # created on <%- new Date() %>
 
+ROOT         := <%- @projectRoot %>
 BIN          := <%- @binPath %>
-TOOLS        := out
+TOOLS        := TODO
+
 
 COFFEEC      := $(BIN)/coffee
 STYLUSC      := $(BIN)/stylus
@@ -12,6 +14,8 @@ ISTANBUL     := $(BIN)/istanbul
 ISTANBUL_TEST_RUNNER  := $(TOOLS)/mocha_istanbul_test_runner.coffee
 COMPONENT_BUILD   := $(BIN)/component-build
 COMPONENT_INSTALL := $(BIN)/component-install
+
+COMPONENT_GENERATOR := node $(ROOT)/out/create_component_json
 
 COUCHVIEW_INSTALL := $(TOOLS)/install_couch_view.coffee
 
