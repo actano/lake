@@ -16,7 +16,7 @@ Installation
 
     npm -g install lake
 
-If you don't want to install it globally, try (this approach)[http://stackoverflow.com/a/15157360] and in addition add `alias lake="npm-exec lake"` to yout .bashrc file.
+If you don't want to install it globally, try [this approach](http://stackoverflow.com/a/15157360) and in addition add `alias lake="npm-exec lake"` to yout .bashrc file.
 
 Usage
 =====
