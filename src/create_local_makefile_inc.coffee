@@ -342,8 +342,14 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
 
                     browserTestTemplatesPreequisit.push path.join libPrefix, manifest.client.tests.browser.html
 
-                    browserTestTemplatesPreequisit.concat _(manifest.client.tests.browser.prerequisits).map (item) ->
-                        path.join libPrefix, item
+                    if manifest.client.tests.browser.prerequisits?
+                        browserTestTemplatesPreequisit.concat _(manifest.client.tests.browser.prerequisits).map (item) ->
+                            path.join libPrefix, item
+                    else
+                        # TODO delete this
+                        # DEPRECATED
+                        browserTestTemplatesPreequisit.push path.join libPrefix, "views/markup.jade"
+                        browserTestTemplatesPreequisit.push path.join projectRoot, "lib/views/page.jade"
 
                     testTemplateTarget = path.join libPrefix, BUILD_DIR, "test.html"
                     targets.push testTemplateTarget
@@ -455,6 +461,11 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
                     if manifest.htdocs.page.dependencies?.templates?
                         prerequisits = _(manifest.htdocs.page.dependencies.templates).map (item) ->
                             path.join libPrefix, item
+                    else
+                        # TODO: remove this when refactoring manifest
+                        # DEPRECATED
+                        prerequisits.push path.join libPrefix, "views/markup.jade"
+                        prerequisits.push path.join projectRoot, "lib/views/page.jade"
 
                     prerequisits.unshift path.join libPrefix, htmlDoc
 
@@ -470,7 +481,8 @@ createLocalMakefileInc = (projectRoot, cwd, cb) ->
 
 
             # add rules for building and running tests according to manifest file content
-
+            if manifest.server?.scripts?.files?
+                targets.push path.join libPrefix, "build", "server_scripts"
             pre = _(targets).clone()
             pre = _(pre).flatten()
             if componentBuildResults?.length > 0
