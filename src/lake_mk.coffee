@@ -27,61 +27,25 @@
 ###
 
 
+# if targetExtReplacement is set then
+# the the a dependency will be unshifted to the dependencies 
+# with the same name as the target, but replaced the extension
+# example
+# foo/bar/target.from: foo/bar/target.to dependency1 dependecy2
 
-# documentation version
-# action is a array of actions
-# each action can have a list of key value pairs
-# the key is only for documantion, will not be evaluated
-# value is a parameter
-# values will be joined with a whitespace
-
-jadeHtmlAction = [
-    [
-        {compile: "$(JADEC)"}
-        {firstDependecy: "$<"}
-        {withPrettyMode: "--pretty"}
-        {andPass: "--obj"}
-        {thisToTheTemplate: "__OBJECT__"}
-        {resultGoes: "--out"}
-        {toThisDir: "__BUILD_TARGET__"}
-    ]
-]
-# short version
-jadeHtmlAction = [
-    [
-        {compilePretty: "$(JADEC) $< --pretty --obj __OBJECT__ --out __BUILD_TARGET__"}
-    ]
-]
-
-###
-    @mkdir -p lib/timeline/build/views
-	@echo "module.exports=" > $@
-	$(JADEC) --client --path $< < $< >> $@
-###
-
-jadePartialAction = [
-    [
-        {createDir: "@mkdir"}
-        {withParents: "-p"}
-        {var1: "__BUILD_VIEWS__"}
-    ]
-    [
-        {echo: "@echo"}
-        {string: '"module.exports="'}
-        {pipe: ">"}
-        {toAllDependencies: "$@"}
-    ]
-    # short version
-    [
-        {compilePartial: "$(JADEC) --client --path $< < $< >> $@"}
-    ]
-]
 
 actionDescriptions =
-    "jade.html": jadeHtmlAction
-    "jade.partial": jadePartialAction
-
-
+    "jade.html": 
+    	targetExtReplacement: {from: "jade", to: "html"}
+    	actions: ["$(JADEC) $< --pretty --obj __OBJECT__ --out __BUILD_TARGET__"]}
+    
+    "jade.partial": 
+    	targetExtReplacement: {from: "jade", to: "js"}
+    	actions: [
+    	  "@mkdir -p lib/timeline/build/views"
+    	  "@echo 'module.exports=' > $@"
+    	  "$(JADEC) --client --path $< < $< >> $@"
+    	]
 
 
 ###
