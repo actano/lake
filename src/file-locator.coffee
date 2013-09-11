@@ -68,6 +68,7 @@ exports.findProjectRoot = (cb) ->
     test = -> found
 
     async.doUntil fn, test, (err) ->
+        if err? then currPath = null
         projectRoot = currPath
         cb err, currPath
 
