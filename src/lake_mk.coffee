@@ -1,4 +1,16 @@
 ###
+
+    THIS ARE SOME API MOCKS
+
+    for lake's Makefile.mk generation
+    which is baed on the Manifest.coffe / Lakefile format and structure
+
+    motivation is to create a generic API for the Makefile.mk creation
+
+###
+
+
+###
     make syntax
 
     $@ (full target name of the current target)
@@ -8,21 +20,36 @@
     $^ (name of all the dependencies with space as the delimiter)
 ###
 
-
-
 ###
+    example of how a make rule looks like
+
     "$(JADEC) $< --pretty --obj {\\\"name\\\":\\\"#{manifest.name}\\\"} --out #{targetBuildPath}"
 ###
 
+
+
+# documentation version
+# action is a array of actions
+# each action can have a list of key value pairs
+# the key is only for documantion, will not be evaluated
+# value is a parameter
+# values will be joined with a whitespace
+
 jadeHtmlAction = [
     [
-        {bin: "$(JADEC)"}
+        {compile: "$(JADEC)"}
         {firstDependecy: "$<"}
-        {param1: "--pretty"}
-        {param2: "--obj"}
-        {param3: "__OBJECT__"}
-        {param4: "--out"}
-        {param5: "__BUILD_TARGET__"}
+        {withPrettyMode: "--pretty"}
+        {andPass: "--obj"}
+        {thisToTheTemplate: "__OBJECT__"}
+        {resultGoes: "--out"}
+        {toThisDir: "__BUILD_TARGET__"}
+    ]
+]
+# short version
+jadeHtmlAction = [
+    [
+        {compilePretty: "$(JADEC) $< --pretty --obj __OBJECT__ --out __BUILD_TARGET__"}
     ]
 ]
 
@@ -44,15 +71,9 @@ jadePartialAction = [
         {pipe: ">"}
         {toAllDependencies: "$@"}
     ]
+    # short version
     [
-        {compile: "$(JADEC)"}
-        {toJavaScript: "--client"}
-        {withPath: "--path"}
-        {ofFirstDependency: "$<"}
-        {readFrom: "<"}
-        {firstDependency: "$<"}
-        {appendTo: ">>"}
-        {allDependencies: "$@"}
+        {compilePartial: "$(JADEC) --client --path $< < $< >> $@"}
     ]
 ]
 
@@ -64,15 +85,15 @@ actionDescriptions =
 
 
 ###
+
+    desired result
+    case 1
+
     lib/timeline/build/test.html: lib/timeline/test/test.jade lib/timeline/views/markup.jade /Users/awilhelm/actano-rplan/lib/views/page.jade lib/timeline/build/test/timeline-browser.js
 	$(JADEC) $< --pretty --obj {\"name\":\"timeline\"\,\"tests\":\"timeline-browser.js\"} --out lib/timeline/build
 
-   "$(JADEC) $< --pretty --obj {\\\"name\\\":\\\"#{manifest.name}\\\"} --out #{targetBuildPath}"
+    case 2
 
-###
-
-
-###
     lib/timeline/build/views/list-entry-partial.js: lib/timeline/views/list-entry-partial.jade
 	@mkdir -p lib/timeline/build/views
 	@echo "module.exports=" > $@
@@ -89,12 +110,12 @@ creatRuleHigh 'test.html', ['../dep1/foo.bar', 'local.bar'], actionDescriptions[
 
 
 ## super high level PAI
-## pass only the manifest subtree and compile engine / mode
+## pass only the Manifest/Lakefile subtree namespace and compile engine / mode
 # rule for html with jade compiler, html mode
-createRuleSuperHigh client.htdocs.index, 'jade.html'
+createRuleSuperHigh 'client.htdocs.index', 'jade.html'
 
 # rule for a partial/template, compile with jade, partial mode
-createRuleSuperHigh client.templates, 'jade.partial'
+createRuleSuperHigh 'client.templates', 'jade.partial'
 
 
 
@@ -102,11 +123,13 @@ createRuleLow = (target, dependecies, actionDescriptions, param) ->
 
     action = []
     firstAction = actionDescriptions[0]
-    _(firstAction).each (key,value) ->
-        regex = /__(.*)__/
-        match = value.match regex
-        if match?
-            value = param[match[1]]
+    _(firstAction).each (key, value) ->
+        regex = /*__(.*)__*/
+        matches = value.match regex
+        if matches?
+            # replace it for every match
+            _(matches).each (match) ->
+                value.replace(match, param[match])
 
         action.push value
 
