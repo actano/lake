@@ -94,7 +94,6 @@ Example
 directory structure
 
     fancy_project
-        .lakeconfig
         .lake
             stuff you can ignore
         lib
