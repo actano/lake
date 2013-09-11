@@ -21,11 +21,7 @@ npm_bin = (cb) ->
 
 exports.getDotLakeList = (cb) ->
     async.waterfall [
-        (cb) ->
-            if projectRoot?
-                cb null, projectRoot
-            else
-                exports.findProjectRoot cb
+        exports.findProjectRoot
 
         (projectRoot, cb) ->
             dotLakePath = path.join projectRoot, DOT_LAKE_FILENAME
@@ -58,10 +54,11 @@ exports.findProjectRoot = (cb) ->
         fs.exists filePath, (exists) ->
             found = exists
             if not found
-                l = currPath.split path.sep
-                if l.length isnt 1
+                l = currPath.split path.sep                
+                if l.length > 2
                     l.pop()
                     currPath = path.sep + path.join.apply null, l
+                    debug "#{DOT_LAKE_FILENAME} not found at #{currPath}"
                     cb null
                 else
                     cb new Error "#{DOT_LAKE_FILENAME} could not be found."
