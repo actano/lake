@@ -1,0 +1,26 @@
+phantom = require 'phantom'
+{expect} = require 'chai'
+
+###
+    1. phantomjs need to be in your PATH (github.com/sgentle/phantomjs-node)
+    2. to pass this test, you need a server
+       run `node server` before start the test
+###
+
+# @see client.coffee
+describe 'root html page', ->
+
+    # TODO: make a real test
+    it.skip "should return a html page with a friendly 'Hello World' message", (done) ->
+        # it "should return a html page with a friendly 'Hello World' message", (done) ->
+        phantom.create (ph) ->
+            sharedPhantom = ph
+            sharedPhantom.createPage (page) ->
+                page.open "http://localhost:8081/demo.html", (status) ->
+                    expect(status).to.equal('success')
+                    page.evaluate ( evaluatePage ), (result) ->
+                        expect(result).to.have.string('Hello World')
+                        done()
+
+evaluatePage = ->
+    return document.querySelector('.content span').innerText

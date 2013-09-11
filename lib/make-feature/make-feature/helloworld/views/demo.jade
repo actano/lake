@@ -1,0 +1,14 @@
+extends page
+include markup
+
+append styles
+    link(rel="stylesheet", type="text/css", href="<%- @NAME %>.css")
+
+append scripts
+    script(src="<%- @NAME %>.js")
+    :coffeescript
+        <%- @CLASSNAME %> = require '<%- @NAME %>'
+        <%- @INSTANCENAME %> = new <%- @CLASSNAME %>('.content')
+
+block body
+    mixin markup
