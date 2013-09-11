@@ -81,7 +81,7 @@ module.exports.lmake = (env, target, outerCb) ->
                 output.push data
 
             debug "lake spawned with args: #{arg} and cwd: #{opt.cwd}"
-            lmake.stdout.pipe(process.stdout, { end: false });
+            #lmake.stdout.pipe(process.stdout, { end: false });
             lmake.on 'exit', (exitCode) ->
                 if exitCode isnt 0
                     process.stdout.write o for o in output
