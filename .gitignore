@@ -6,5 +6,5 @@ lake.iml
 .idea/
 build
 test/Makefile
-out
 Makefile
+bin/clake
