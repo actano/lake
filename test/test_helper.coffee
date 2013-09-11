@@ -4,6 +4,7 @@ path = require 'path'
 {expect} = require 'chai'
 debug = require('debug')('test-helper')
 {spawn} = require('child_process')
+{Sink} = require 'pipette'
 
 {findProjectRoot, locateNodeModulesBin} = require '../src/file-locator'
 
@@ -69,10 +70,21 @@ module.exports.lmake = (env, target, outerCb) ->
             # TODO: refactor, extract names
             localMake = path.join binPath, '..', '..', 'bin', 'lake'
             opt = {cwd: env.libPath}
+
             lmake = spawn localMake, arg, opt
+            lmake.on 'error', (err) ->
+                console.error "failed to spawn #{localMake}"
+            output = []
+            lmake.stdout.on 'data', (data) ->
+                output.push data
+            lmake.stderr.on 'data', (data) ->
+                output.push data
+
             debug "lake spawned with args: #{arg} and cwd: #{opt.cwd}"
-            #lmake.stdout.pipe(process.stdout, { end: false });
+            lmake.stdout.pipe(process.stdout, { end: false });
             lmake.on 'exit', (exitCode) ->
+                if exitCode isnt 0
+                    process.stdout.write o for o in output
                 cb(null, exitCode)
 
         (exitCode, cb) ->

@@ -11,7 +11,7 @@ eco = require 'eco'
 {_} = require 'underscore'
 
 createLocalMakefileInc = require './create_local_makefile_inc'
-{findProjectRoot, locateNodeModulesBin, getDotLakeList} = require './file-locator'
+{findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'
 
 mergeObject = (featureTargets, globalTargets) ->
     _(featureTargets).each (value, key, list) ->
@@ -35,7 +35,7 @@ createMakefiles = (cb) ->
                 cb err, binPath, projectRoot
 
         (binPath, projectRoot, cb) ->
-            getDotLakeList (err, list) ->
+            getFeatureList (err, list) ->
                 if err?
                     return cb err
                 cb null, binPath, projectRoot, list

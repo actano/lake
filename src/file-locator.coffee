@@ -19,20 +19,28 @@ npm_bin = (cb) ->
     exec 'npm bin', (err, stdout, stderr) ->
         cb err, stdout
 
-exports.getDotLakeList = (cb) ->
+exports.getFeatureList = (cb) ->
     async.waterfall [
         exports.findProjectRoot
 
         (projectRoot, cb) ->
-            dotLakePath = path.join projectRoot, DOT_LAKE_FILENAME
-            fs.readFile dotLakePath, 'utf8', cb
-
-        (fileContent, cb) ->
-            lines = fileContent.split '\n'
-            lines = _(lines).map (line) ->
+            featuresPath = path.join projectRoot, ".lake/features"
+            readStream = fs.createReadStream featuresPath
+            lines = []
+            myCarrier = carrier.carry readStream
+            myCarrier.on 'line', (line) ->
                 # trim
-                line.replace /^\s+|\s+$/g, ''
-            cb null, lines
+                debug 'adding line'
+                line = line.replace /^\s+|\s+$/g, ''
+                if line.substring(0,1) isnt '#'
+                    lines.push line
+        
+            readStream.on 'end', ->
+                debug 'finished.'
+                cb null, lines
+
+            readStream.on 'error', (err) ->
+                cb err
 
     ], (err, result) ->
         if err?

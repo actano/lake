@@ -4,3 +4,6 @@ npm-debug.log
 lib/*.js
 lake.iml
 .idea/
+build
+test/Makefile
+out

@@ -68,7 +68,7 @@ describe 'testlmake feature dependencies', ->
 
 
     # TODO: make a real test
-    it 'should return a friendly message from the route /helloworld', (done) ->
+    it.skip 'should return a friendly message from the route /helloworld', (done) ->
         request(app)
             .get('/testlmake')
             .end (err, res) ->
@@ -88,7 +88,7 @@ describe 'testlmake feature dependencies', ->
 
 
 
-    it 'modify stylus source of depended features, recompile and test', (done) ->
+    it.skip 'modify stylus source of depended features, recompile and test', (done) ->
         @timeout(15000)
 
         async.waterfall [
@@ -141,7 +141,7 @@ describe 'testlmake feature dependencies', ->
         ], done
 
 
-    it 'modify a jade sources of depended features, recompile and test', (done) ->
+    it.skip 'modify a jade sources of depended features, recompile and test', (done) ->
         @timeout(15000)
         debug 'modify some files now'
 
@@ -192,7 +192,7 @@ describe 'testlmake feature dependencies', ->
 
         ], done
 
-    it 'modify a the required module source of depended features, recompile and test', (done) ->
+    it.skip 'modify a the required module source of depended features, recompile and test', (done) ->
         @timeout(15000)
 
         async.waterfall [
