@@ -5,7 +5,7 @@
   "bin": {
     "lake": "./bin/lake",
     "lake-init": "./bin/lake-init",
-    "lake-add": "./bin/lake-add",
+    "lake-list": "./bin/lake-list",
     "create_component_json": "./bin/create_component_json"
   },
   "contributors": [
