@@ -9,7 +9,7 @@ module.exports =
     description: ""
     keywords: []
 
-    documentation: ["Readme.md", "History.md"]
+    documentation: ["Readme.md"]
     library: true
 
     htdocs:
@@ -77,7 +77,7 @@ module.exports =
 
     server:
         scripts:
-            files: ["server.coffee", "index.coffee"] # must be a file
+            files: ["server.coffee"] # must be a file
         mountPoint: "/testlmake"
         tests:
             integration: [

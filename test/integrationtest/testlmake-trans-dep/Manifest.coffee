@@ -7,7 +7,6 @@ module.exports =
     description: ""
     keywords: []
 
-    documentation: ["Readme.md", "History.md"]
     library: true
 
     htdocs:
@@ -68,21 +67,16 @@ module.exports =
                 "test/testlmake-trans-dep-phantom.coffee"
             ]
 
-    server:
+   server:
         scripts:
-            files: ["server.coffee", "index.coffee"] # must be a file
-        mountPoint: "/testlmake-trans-dep"
-        tests:
-            integration: [
-                "test/testlmake-trans-dep-integration.coffee"
-            ]
-            unit: [
-                "test/testlmake-trans-dep-unit.coffee"
-            ]
+            files: [] # must be a file
+        mountPoint: ""
+
 
     database:
         designDocuments: []
         bucket: []
+
 
 
 

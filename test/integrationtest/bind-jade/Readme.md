@@ -1,9 +1,0 @@
-
-# bind-jade
-
-
-## Usage
-
-
-## API
-
