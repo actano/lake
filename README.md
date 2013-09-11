@@ -14,9 +14,10 @@ If you are building a complex web application with NodeJS, Couchbase, Component,
 Installation
 ============
 
-    npm -g install lake
+    cd my_fancy_node_project
+    npm install lake --save-dev
 
-If you don't want to install it globally, try [this approach](http://stackoverflow.com/a/15157360) and in addition add `alias lake="npm-exec lake"` to yout .bashrc file.
+You don't want to install it globally. Instead try [this approach](http://stackoverflow.com/a/15157360) and in addition add `alias lake="npm-exec lake"` to yout .bashrc file. Don't forget to `source ~/.bashrc` Now you can use `lake` conveniently from your command line as if it were globally installed.
 
 Usage
 =====
@@ -35,7 +36,7 @@ Usage
 
 Motivation
 ==========
-We used to build our application with gtunt. HThat didn't scale to well. Grunt has no internal mechanism of finding out whether a certain file needs to be updated; it uncinditionally runs all steps of a task. If a project reaches a certain complexity, this just takes too much time.
+We used to build our application with gtunt. That didn't scale to well. Grunt has no internal mechanism of finding out whether a certain file needs to be updated; it uncinditionally runs all steps of a task. If a project reaches a certain complexity, this just takes too much time.
 
 `make` solved this problem a long time ago. Instead of imperatively defining a set of tasks to be run in sequence, you declare a dependency graph along with a set of actions that create target files from a list of source files. `make` than figures out what actions need to run in order to create or update the target files. This approach is way more efficient.
 
@@ -54,14 +55,14 @@ To solve the above problems, we decided to generate our Makefile and the files i
 Files
 =====
 
-.lakeconfig file
-----------------
-Stores a list of locations of Lakefiles that contribute targets to the generated Makefile.
-`lake-add` adds a location to the list. Edit the file manually to delete a location.
-
 .lake directory
 ---------------
 Stores private data like generated Makefile.mk files etc. Just like the .git direcotey, you normally have no neeed to look into this.
+
+.lake/features
+--------------
+Stores a list of locations of Lakefiles that contribute targets to the generated Makefile.
+`lake-add` adds a location to the list.
 
 Lakefile
 --------
