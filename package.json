@@ -4,7 +4,8 @@
   "description": "a very oppinionated make-based build tool for complex and modular web applications that run on NodeJS",
   "main": "lib/index.js",
   "bin": {
-    "lake": "./bin/lake"
+    "lake": "./bin/lake",
+    "create_component_json": "./bin/create_component_json"
   },
   "contributors": [
     "Bastian Albers (http://github.com/bastianalbers)",

@@ -139,37 +139,37 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
 
 module.exports = generateComponent
 
+debug "started standalone"
 
-if require.main is module
-    usage = """
-        USAGE: #{path.basename process.argv[1]} <path to manifest> <path to component.json>
-    """
+usage = """
+    USAGE: #{path.basename process.argv[1]} <path to manifest> <path to component.json>
+"""
 
-    debug "processing arguments ..."
-
-
-    knownOpts =
-        "help" : Boolean
-
-    shortHands = {
-        "h": ["--help"]
-    }
-
-    parsedArgs = nopt(knownOpts, shortHands, process.argv, 2)
+debug "processing arguments ..."
 
 
-    if parsedArgs.help or parsedArgs.argv.remain.length isnt 2
-        console.log usage
-        process.exit 0    
-    
-    findProjectRoot (err, projectRoot) ->
-        if err?
-            console.error err.message
-            process.exit 1
+knownOpts =
+    "help" : Boolean
 
-        debug "started standalone"
-        [manifestPath, componentPath] = parsedArgs.argv.remain
-        generateComponent projectRoot, manifestPath, componentPath
+shortHands = {
+    "h": ["--help"]
+}
+
+parsedArgs = nopt(knownOpts, shortHands, process.argv, 2)
+
+
+if parsedArgs.help or parsedArgs.argv.remain.length isnt 2
+    console.log usage
+    process.exit 0
+
+findProjectRoot (err, projectRoot) ->
+    if err?
+        console.error err.message
+        process.exit 1
+
+    debug "started standalone"
+    [manifestPath, componentPath] = parsedArgs.argv.remain
+    generateComponent projectRoot, manifestPath, componentPath
     
 
 
