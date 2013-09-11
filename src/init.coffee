@@ -25,17 +25,25 @@ if parsedArgs.help
 # if we find a project root, --force is required
 findProjectRoot (err, existingProjectRoot) ->
     if existingProjectRoot?
-        console.log "WARNING: seems like a .lake directory already exists at #{existingProjectRoot}. Use --force to create one anyway."
         if not parsedArgs.force
+            console.log "WARNING: seems like a .lake directory already exists at #{existingProjectRoot}.\n
+         Use --force to overwrite the files in .lake/"
             process.exit 1
-    console.log "creating .lake directory"
+
+        console.log "overwriting .lake directory"
+    else
+        console.log "creating .lake directory"
+
     try
         fs.mkdirSync '.lake'
     catch err
-        console.error "failed to create .lake directory: #{err}"
         if err.code is "EEXIST"
-            console.log "please rm -rf .lake if you want to re-init. I will not do such a thing for you."
-        process.exit 1
+            unless parsedArgs.force
+                console.log "please rm -rf .lake if you want to re-init. I will not do such a thing for you."
+                process.exit 1
+        else
+            console.error "failed to create .lake directory: #{err}"
+            process.exit 1
 
     # put a .gitignore file into .lake to ignore build/ directory
     debug "writing .lake/.gitignore"
@@ -43,7 +51,11 @@ findProjectRoot (err, existingProjectRoot) ->
 
     # creating build/ directory
     debug "creating .lake/build"
-    fs.mkdirSync '.lake/build'
+    try
+        fs.mkdirSync '.lake/build'
+    catch err
+        if err.code is not "EEXIST"
+            console.error "failed to create .lake/build directory: #{err}"
 
     # write an empty config file
     debug "writing .lake/config"
