@@ -26,42 +26,43 @@
 
 # there are some BUILT-IN variables, accessable when wrapping with 2 underscores: __EXAMPLE__
 
-# PROJECT_ROOT      - where the .lake directory is
-# NAME              - name of the feature's directory
-# CLASS_NAME        - if the class name replace special chars like dash and underscore and return a camelCase name
-# FQ_PATH           - feature path relative to the project root
-# BUILD_SUFFIX      - default 'build', can be overwritten
-# FQ_BUILD_PATH     - FQ_PATH / BUILD_SUFFIX (using path.join)
-# MANIFEST_PATH     - path to Manifest / Lakefile
-# ITEM              - is only available when looping over an array or object keys
+PROJECT_ROOT      # where the .lake directory is
+NAME              # name of the feature's directory
+CLASS_NAME        # if the class name replace special chars like dash and underscore and return a camelCase name
+FQ_PATH           # feature path relative to the project root
+BUILD_SUFFIX      # default 'build', can be overwritten
+FQ_BUILD_PATH     # FQ_PATH / BUILD_SUFFIX (using path.join)
+MANIFEST_PATH     # path to Manifest / Lakefile
+ITEM              # is only available when looping over an array or object keys
 
 # You can set the TARGET, DEPENDENCIES and ACTIONS different value types: STRING and HASHED
 
-# "$(COFFEEC) --help"   - STRING    - will be not evaluated at runtime, Makefile variables $(VAR) will be replaced at build time
-# "#(manifest.client)"  - HASHED    - will be evaluated at runtime, to access the manifest object for example
+"$(COFFEEC) --help"   # STRING    - will be not evaluated at runtime, Makefile variables $(VAR) will be replaced at build time
+"#(manifest.client)"  # HASHED    - will be evaluated at runtime, to access the manifest object for example
 
 # SUBSTITUTION AND EVAL ORDER FOR LOOPS
 #
 # first the BUILT-IN variables will be replaced
 # then the expression will be evaluated
-#
-# EXAMPLE1: iterate over manifest.htdocs = [ {name: 'foo'}, {name:'bar'} ]
-# EXAMPLE2: iterate over manifest.htdocs = { index:{html: 'foo'}, demo:{html: 'bar'} }
-#
-## target1: {item: 'FQ_PATH/#(__ITEM__["name"])', array: '#(manifest.htdocs)'}
-## target2: {item: 'FQ_PATH/#(__ITEM__["html"])', object: '#(manifest.htdocs)'}
-#
+
+EXAMPLE1: iterate over manifest.htdocs = [ {name: 'foo'}, {name:'bar'} ]
+EXAMPLE2: iterate over manifest.htdocs = { index:{html: 'foo'}, demo:{html: 'bar'} }
+
+target1: {item: 'FQ_PATH/#(__ITEM__["name"])', array: '#(manifest.htdocs)'}
+target2: {item: 'FQ_PATH/#(__ITEM__["html"])', object: '#(manifest.htdocs)'}
+
 # after BUILT-IN substitution for the first iteration
+
+target1: {item: 'FQ_PATH/#(_array[0]["name"])', array: '#(manifest.htdocs)'}
+target2: {item: 'FQ_PATH/#(index["html"])', array: '#(manifest.htdocs)'}
+
+# result contains two targets (for both examples):
 #
-## target1: {item: 'FQ_PATH/#(_array[0]["name"])', array: '#(manifest.htdocs)'}
-## target2: {item: 'FQ_PATH/#(index["html"])', array: '#(manifest.htdocs)'}
-#
-# result:
-#
-## lib/feature/foo: dependencies
-## actions
-## lib/feature/bar: dependencies
-## actions
+lib/feature/foo: dependencies
+actions
+
+lib/feature/bar: dependencies
+actions
 
 
 # INTERN NOTE
