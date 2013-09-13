@@ -11,6 +11,8 @@ eco = require 'eco'
 {_} = require 'underscore'
 
 createLocalMakefileInc = require './create_local_makefile_inc'
+#createLocalMakefileInc = require './create_mk' # not implemented yet
+
 {findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'
 
 mergeObject = (featureTargets, globalTargets) ->
@@ -32,24 +34,33 @@ createMakefiles = (cb) ->
         (binPath, cb) ->
             debug 'findProjectRoot'
             findProjectRoot (err, projectRoot) ->
-                cb err, binPath, projectRoot
+                if err? then return cb err
+                cb null, binPath, projectRoot
 
         (binPath, projectRoot, cb) ->
+            debug "retreive feature list"
             getFeatureList (err, list) ->
-                if err?
-                    return cb err
+                if err? then return cb err
                 cb null, binPath, projectRoot, list
 
         (binPath, projectRoot, featureList, cb) ->
 
             makefileIncPathList = []
             globalTargets = {}
+            stopQueue = false
+            # queue worker function
+            q = async.queue (featurePath, queueCb) ->
 
-            q = async.queue (featurePath, cb) ->
+                if stopQueue
+                    return queueCb new Error "queue worker was stopped due stop flag"
+
                 cwd = path.join projectRoot, featurePath
                 console.log "Creating Makefile.mk for #{featurePath}"
                 createLocalMakefileInc projectRoot, cwd, (err, makefileContent, globalFeatureTargets) ->
-                    if err? then return cb err
+                    if err
+                        console.error err.message
+                        stopQueue = true
+                        return queueCb err
 
                     mergeObject globalFeatureTargets, globalTargets
 
@@ -58,40 +69,44 @@ createMakefiles = (cb) ->
                     buildDir = path.dirname absolutePath
                     debug "making sure #{buildDir} exists."
                     mkdirp buildDir, (err) ->
-                        if err? then return cb err
+                        if err? then return queueCb err
                         fs.writeFile absolutePath, makefileContent, (err) ->
-                            if err? then return cb err
-                            cb null, makefileMkPath
+                            if err? then return queueCb err
+                            queueCb null, makefileMkPath
             , 1
 
-            async.each featureList, (featurePath, cb) ->
+            async.each featureList, (featurePath, eachCb) ->
 
                 # manifest syntax check
                 try
                     m = require path.join projectRoot, featurePath, 'Manifest'
                     if _(m).isEmpty()
-                        throw new Error 'Manifest is empty or has no module.exports'
+                        eachCb new Error 'Manifest is empty or has no module.exports'
                 catch err
                     err.message = "Error in Manifest #{featurePath}: #{err.message}"
                     debug err.message
-                    throw err
+                    eachCb err
 
                 q.push featurePath, (err, makefileMkPath) ->
                     if not err?
                         debug "created #{makefileMkPath}"
                         makefileIncPathList.push makefileMkPath
-                        cb()
+                        eachCb()
                     else
                         message = "failed to create Makefile.mk for #{featurePath}: #{err}"
                         debug message
                         # we have to make sure that the callback is only called once
-                        cb new Error message
+                        eachCb new Error message
 
             , (err) ->
-                if err?
+                if err
+                    console.error "worker queue error: #{err.message}"
                     return cb err
-                debug 'Makefile.mk finished for feature all features in .lake'
+
+                # will be called when queue proceeded last item
+                # TODO: why this assignment have to be in this scope, and not a scope more outer
                 q.drain = ->
+                    debug 'Makefile.mk finished for feature all features in .lake'
                     debug globalTargets
                     cb null, binPath, projectRoot, makefileIncPathList, globalTargets
 
