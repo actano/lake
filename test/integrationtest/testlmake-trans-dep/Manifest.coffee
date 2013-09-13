@@ -67,18 +67,6 @@ module.exports =
                 "test/testlmake-trans-dep-phantom.coffee"
             ]
 
-   server:
-        scripts:
-            files: [] # must be a file
-        mountPoint: ""
-
-
-    database:
-        designDocuments: []
-        bucket: []
-
-
-
 
 
 

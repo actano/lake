@@ -6,7 +6,6 @@ module.exports =
     license: "MIT"
     description: "exports a jade'd template file"
     keywords: []
-    documentation: ["Readme.md","History.md"]
     library: true
 
     ###
