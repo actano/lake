@@ -6,7 +6,7 @@ debug = require('debug')('lake.create_mk')
 
 
 MANIFEST_FILE_NAME = "Manifest"
-MAKEFILE_MK_NAME = "Makefile.mk"
+MAKEFILE_MK_NAME = "dev_Makefile.mk"
 BUILD_SUFFIX = 'build'
 
 # config key names, for better refactoring
@@ -17,7 +17,6 @@ CFG_TARGET_REGEX = "targetRegex"
 CFG_GLOBAL_TARGET = "globalTarget"
 CFG_TARGET_AS_FIRST_DEP = "targetAsFirstDependency"
 CFG_FIRST_DEPENDENCY = "firstDependecy"
-CFG_DEFAULT_VALUE = "N/A"
 
 
 projectRoot = undefined             # absolute path: /Users/john/projectX
@@ -54,14 +53,14 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
     rules["component.json"] =
         globaleTarget: true
         target: path.join featureBuildPath, "component.json"
-        dependencies: [manifestPath, manifestPath]
+        dependencies: manifestPath
         actions: [
             "mkdir -p #{featureBuildPath}"
             "$(COMPONENT_GENERATOR) $< $@"
         ]
 
     rules["build"] =
-        target: () -> lookup manifest, 'client.dependencies.production.test'
+        target: () -> lookup manifest, 'description'
         dependencies: [
             () -> getTarget "component.json"
             () -> getTarget "component.install"
@@ -78,13 +77,20 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             "touch #{componentPath}"
         ]
 
-    debug "testing ..."
-    buildDep = rules["build"].dependencies
+    ###
+       lib/planning-objects/integration_test: lib/planning-objects/build
+        $(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script lib/planning-objects/test/server-itest.coffee
+        $(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script lib/planning-objects/test/sorting-itest.coffee
+        $(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script lib/planning-objects/test/workpackage-itest.coffee
+    ###
 
-    #console.log buildDep[0]()
-    #console.log buildDep[1]()
-    #console.log buildDep[2]()
-
+    rules["integration-test"] =
+        condition: 'integrationTest' # create the rule only if the manifest property exist
+        target: path.join featurePath ,'integration_test'
+        dependencies: featureBuildPath
+        actions: () ->
+            _(lookup manifest, 'integrationTests.mocha').map (item) ->
+                "$(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script #{item}"
 
     ruleNameList = _(rules).keys()
 
@@ -92,15 +98,23 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
     _(ruleNameList).each (element) ->
         currentRule = rules[element]
         target = currentRule[CFG_TARGET]
+        result = undefined # evaluated target
+
         type = getType target
-        result = undefined # evaluated target 
+
+        if type is 'function'
+            # check the type again after calling the function
+            target = target()
+            type = getType target
 
         if type is 'string'
             result = target
-        else if type is 'function'
-            result = target()
+
+        else if type is 'array'
+            result = target.join ' '
+
         else
-            throwError "#{element}.#{CFG_TARGET}", "string or function", type
+            throwError "#{element}.#{CFG_TARGET}", "string, array or function", type
 
         if currentRule[CFG_TARGET_AS_FIRST_DEP]?
             currentRule[CFG_FIRST_DEPENDENCY] = result # 
@@ -131,11 +145,17 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         result = undefined # evaluated target
         currentRule = rules[element]
         dependencies = currentRule[CFG_DEPENDENCIES]
+
         type = getType dependencies
+
+        if type is 'function'
+            # check the type again after calling the function
+            dependencies = dependencies()
+            type = getType dependencies
+
         if type is 'string'
             result = dependencies
-        else if type is 'function'
-            result = dependencies()
+
         else if type is 'array'
             result = []
             # parse each array element
@@ -167,12 +187,18 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         actions = currentRule[CFG_ACTIONS]
         if not actions?
             debug "no #{CFG_ACTIONS} defined for rule #{CFG_ACTIONS}"
-            return 
+            return
+
         type = getType actions
+
+        if type is 'function'
+            # check the type again after calling the function
+            actions = actions()
+            type = getType actions
+
         if type is 'string'
             result = actions
-        else if type is 'function'
-            result = actions()
+
         else if type is 'array'
             result = []
             # parse each array element
@@ -184,7 +210,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
                 else if type is 'function'
                     result[index] = action()
                 else
-                    throwError "#{element}.#{CFG_ACTIONS}[index]", "string or function", type
+                    throwError "#{element}.#{CFG_ACTIONS}#{index}", "string or function", type
                 
             result = result.join "\n\t"
 
@@ -196,10 +222,12 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
 
     console.log rules
 
-    writeMkFile rules, ruleNameList, (err, globalTargets) ->
-
+    writeMkFile rules, ruleNameList, (err, relativeMkPath, globalTargets) ->
+        if err?
+            return outerCb err
         console.log "########################################"
         outerCb new Error "create_mk is not fully implemented"
+        #outerCb err, relativeMkPath, globalTargets
 
 writeMkFile = (rules, ruleNameList, cb) ->
     buffer = ""
@@ -225,11 +253,12 @@ writeMkFile = (rules, ruleNameList, cb) ->
 
 
     mkFilePath = path.join projectRoot, featurePath, MAKEFILE_MK_NAME
+    relativeMkPath = path.relative projectRoot, mkFilePath
     fs.writeFile mkFilePath, buffer, (err) ->
         if err?
             console.error "error writing #{mkFilePath}"
             throw err
-        cb null, globalTargets
+        cb null, relativeMkPath, globalTargets
 
 ###
     prints the key and value of an object: key:value
@@ -247,14 +276,13 @@ keyValues = (obj, opts) ->
             keyValueWrapper: ''
             arraySeperator: ' '
             arraywrapper: ''
-            defaultValue: CFG_DEFAULT_VALUE
         }
 
     pairs = _(obj).pairs()
     result = undefined
     if pairs.length is 0
         debug "no key value pair found"
-        result = "{opts.keyValueWrapper}#{opts.defaultValue}{opts.keyValueWrapper}"
+        throw new Error "no key value found for #{obj}"
     else if pairs.length is 1
         pair = pairs[0]
         key = pair[0]
@@ -275,22 +303,20 @@ keyValues = (obj, opts) ->
 
     return result
 
-
-lookup = (context, key, defaultValue = CFG_DEFAULT_VALUE) ->
+lookup = (context, key) ->
     if not context?
         debug "context is undefined or null, cannot retreive #{key}"
         throw new Error ""
     if key.indexOf('.') is -1
-         value = context[key] ? defaultValue
-         return value
+         return context[key]
      else
         # if context had nested keys, use recursive strategy
-        [firstKey, rest...] = key.split('.')
+        [firstKey, rest...] = key.split '.'
         try
             return lookup context[firstKey], rest.join('.')
         catch err
-            # TODO: check this, really rest[1] ?
-            throw new Error "key '#{rest[1]}' is null in #{key}"
+            lastKey = _(rest).last()
+            throw new Error "key '#{lastKey}' is null in '#{key}'"
         
         
 
