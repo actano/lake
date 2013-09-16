@@ -74,14 +74,18 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             "$(STYLUSC) $(STYLUS_FLAGS) --out #{path.join featureBuildPath, "styles"} $<"
         ]
 
-    rules["build"] =
-        target: () -> lookup manifest, 'description'
-        dependencies: [
-            () -> getTarget "component.json"
-            () -> getTarget "component.install"
-        ]
-        actions: () -> keyValues manifest.client.dependencies.development.remote
-         
+    rules["runtime"] =
+        target: path.join featureBuildPath, 'runtime'
+        dependencies: () ->
+            keys = _(rules).keys()
+            targets = (getTarget ruleName for ruleName in keys)
+
+        # TODO: replace the 'build/' with an empty string
+        # integrationtest/testlmake/build/component.json =>
+        # integrationtest/testlmake/component.json
+        actions: "rsync -rR $^ #{path.join 'runtime', featureBuildPath}"
+
+
 
     rules["component.install"] =
         target: () -> componentPath
@@ -92,26 +96,26 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             "touch #{componentPath}"
         ]
 
-    ###
-       lib/planning-objects/integration_test: lib/planning-objects/build
-        $(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script lib/planning-objects/test/server-itest.coffee
-        $(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script lib/planning-objects/test/sorting-itest.coffee
-        $(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script lib/planning-objects/test/workpackage-itest.coffee
-    ###
-
-    rules["integration-test"] =
+    rules["integration.test"] =
         condition: () ->  lookup manifest, 'integrationTest' # create the rule only if the manifest property exist, interpret error as false
         target: path.join featurePath ,'integration_test'
         dependencies: featureBuildPath
         actions: () ->
-            _(lookup manifest, 'integrationTests.mocha').map (item) ->
+            mapPath manifest.integrationTests.mocha, featureBuildPath, (item) ->
                 "$(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script #{item}"
 
-    rules["htdocs"] =
-        condition: () -> lookup manifest, 'htdocs'
-        target: path.join featureBuildPath, manifest.htdocs.demo.html
-        dependencies: manifest.htdocs.demo.dependencies.templates
-        actions: () -> "$(JADEC) $< --pretty --obj {\"name\":\"#{manifest.name}\"} --out #{featureBuildPath}"
+    # dynamic
+    _(manifest.htdocs).each (value, key) ->
+        rules["htdocs.#{key}"] =
+            condition: () -> lookup manifest, "htdocs.#{key}"
+            target: path.join featureBuildPath, (lookup manifest, "htdocs.#{key}.html")
+            #dependencies: mapPath (lookup manifest, "htdocs.#{key}.dependencies.templates"), featurePath
+            dependencies: []
+            actions: "$(JADEC) $< --pretty --obj {\"name\":\"#{manifest.name}\"} --out #{featureBuildPath}"
+            targetAsFirstDependency: true
+            targetRegex:
+                pattern: /\.jade/
+                replacement: '.html'
 
 
     ruleNameList = _(rules).keys()
@@ -124,7 +128,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             try
                 if not condition()
                     error = new Error ""
-                    error.code = FALSE_CONDITION
+                    error.code = "FALSE_CONDITION"
                     throw error
             catch err
                 if err.code is 'KEY_NOT_FOUND' or err.code is 'FALSE_CONDITION'
@@ -152,7 +156,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         else
             throwError "#{ruleName}.#{CFG_TARGET}", "string, array or function", type
 
-        if currentRule[CFG_TARGET_AS_FIRST_DEP]?
+        if currentRule[CFG_TARGET_AS_FIRST_DEP]? and currentRule[CFG_TARGET_AS_FIRST_DEP] is true
             currentRule[CFG_FIRST_DEPENDENCY] = result # 
 
         if currentRule[CFG_TARGET_REGEX]?
@@ -351,18 +355,22 @@ lookup = (context, key) ->
         # if context had nested keys, use recursive strategy
         [firstKey, rest...] = key.split '.'
 
-        if context[firstKey]?
+        if not context[firstKey]?
             lastKey = _(rest).last()
-            err = new Error "key '#{lastKey}' is null in '#{key}'"
+            #TODO: error message is not correct
+            err = new Error "key '#{firstKey}' is null in '#{key}'"
             err.code = 'KEY_NOT_FOUND'
             return throw err
 
         return lookup context[firstKey], rest.join('.')
 
-mapPath = (src, featureBuildPath, hook) ->
+mapPath = (src, prefixPath, hook) ->
     _(src).map (item) ->
-        buildPathItem = path.join featureBuildPath, item
+        buildPathItem = path.join prefixPath, item
+        if hook?
+            buildPathItem =  hook buildPathItem
 
+        return buildPathItem
 
 
 getTarget = (ruleName) ->
@@ -387,18 +395,4 @@ throwError = (key, expected, type) ->
     throw new Error "expected #{expected} for #{key}, but get #{type}"
 
 module.exports = createLocalMakefileInc
-
-###
- # component-install
-                makefileLines.push formatRule
-                    targetPath: "#{libPrefix}/build/components"
-                    preequisits: ["#{libPrefix}/build/component.json"]
-                    actions: [
-                        "cd #{libPrefix}/build && $(COMPONENT_INSTALL) $(COMPONENT_INSTALL_FLAGS) || rm -rf #{libPrefix}/components"
-                        "test -d #{libPrefix}/build/components"
-                        "touch #{libPrefix}/build/components"
-                    ]
-
-
-###
 
