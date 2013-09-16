@@ -10,8 +10,8 @@ debug = require('debug')("create-makefile")
 eco = require 'eco'
 {_} = require 'underscore'
 
-createLocalMakefileInc = require './create_local_makefile_inc'
-#createLocalMakefileInc = require './create_mk' # not implemented yet
+#createLocalMakefileInc = require './create_local_makefile_inc'
+createLocalMakefileInc = require './create_mk'
 
 {findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'
 
@@ -56,14 +56,15 @@ createMakefiles = (cb) ->
 
                 cwd = path.join projectRoot, featurePath
                 console.log "Creating Makefile.mk for #{featurePath}"
-                createLocalMakefileInc projectRoot, cwd, (err, makefileContent, globalFeatureTargets) ->
+                createLocalMakefileInc projectRoot, cwd, (err, makefileMkPath, globalFeatureTargets) ->
                     if err
                         console.error err.message
                         stopQueue = true
                         return queueCb err
 
                     mergeObject globalFeatureTargets, globalTargets
-
+                    queueCb null, makefileMkPath
+                    ###
                     makefileMkPath = path.join featurePath, "build", "Makefile.mk"
                     absolutePath = path.join projectRoot, makefileMkPath
                     buildDir = path.dirname absolutePath
@@ -73,6 +74,8 @@ createMakefiles = (cb) ->
                         fs.writeFile absolutePath, makefileContent, (err) ->
                             if err? then return queueCb err
                             queueCb null, makefileMkPath
+                    ###
+
             , 1
 
             async.each featureList, (featurePath, eachCb) ->
