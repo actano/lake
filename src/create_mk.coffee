@@ -93,7 +93,11 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             _(lookup manifest, 'integrationTests.mocha').map (item) ->
                 "$(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script #{item}"
 
-
+    rules["htdocs"] =
+        condition: () -> lookup manifest, 'htdocs'
+        target: path.join featureBuildPath, manifest.htdocs.demo.html
+        dependencies: manifest.htdocs.demo.dependencies.templates
+        actions: () -> "$(JADEC) $< --pretty --obj {\"name\":\"#{manifest.name}\"} --out #{featureBuildPath}"
 
 
     ruleNameList = _(rules).keys()
