@@ -10,6 +10,7 @@ MAKEFILE_MK_NAME = "dev_Makefile.mk"
 BUILD_SUFFIX = 'build'
 
 # config key names, for better refactoring
+CFG_CONDITION = "condition"
 CFG_TARGET = "target"
 CFG_DEPENDENCIES = "dependencies"
 CFG_ACTIONS = "actions"
@@ -65,7 +66,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             () -> getTarget "component.json"
             () -> getTarget "component.install"
         ]
-        actions: () -> keyValues lookup(manifest, 'client.dependencies.development.remote')
+        actions: () -> keyValues manifest.client.dependencies.development.remote
          
 
     rules["component.install"] =
@@ -85,18 +86,35 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
     ###
 
     rules["integration-test"] =
-        condition: 'integrationTest' # create the rule only if the manifest property exist
+        condition: () ->  lookup manifest, 'integrationTest' # create the rule only if the manifest property exist, interpret error as false
         target: path.join featurePath ,'integration_test'
         dependencies: featureBuildPath
         actions: () ->
             _(lookup manifest, 'integrationTests.mocha').map (item) ->
                 "$(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script #{item}"
 
+
+
+
     ruleNameList = _(rules).keys()
 
     # parse the CFG_TARGET keys
-    _(ruleNameList).each (element) ->
-        currentRule = rules[element]
+    _(ruleNameList).each (ruleName) ->
+        currentRule = rules[ruleName]
+        condition = currentRule[CFG_CONDITION]
+        if condition? and _(condition).isFunction()
+            try
+                if not condition()
+                    error = new Error ""
+                    error.code = FALSE_CONDITION
+                    throw error
+            catch err
+                if err.code is 'KEY_NOT_FOUND' or err.code is 'FALSE_CONDITION'
+                    debug "delete rule #{ruleName} because condition is false #{condition}"
+                    ruleNameList = _(ruleNameList).without ruleName
+                    return
+                throw err
+
         target = currentRule[CFG_TARGET]
         result = undefined # evaluated target
 
@@ -114,7 +132,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             result = target.join ' '
 
         else
-            throwError "#{element}.#{CFG_TARGET}", "string, array or function", type
+            throwError "#{ruleName}.#{CFG_TARGET}", "string, array or function", type
 
         if currentRule[CFG_TARGET_AS_FIRST_DEP]?
             currentRule[CFG_FIRST_DEPENDENCY] = result # 
@@ -129,7 +147,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
                 if not pattern? and not replacement?
                     throw new Error ""
             catch err
-                throwError "#{element}.#{CFG_TARGET_REGEX}", "{pattern, replacement}", obj
+                throwError "#{ruleName}.#{CFG_TARGET_REGEX}", "{pattern, replacement}", obj
 
             # TODO: let the user choose, if he wants replace only basename or fullname?
             dirName = path.dirname result
@@ -141,9 +159,9 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
 
 
     # parse the CFG_DEPENDENCIES keys
-    _(ruleNameList).each (element) ->
+    _(ruleNameList).each (ruleName) ->
         result = undefined # evaluated target
-        currentRule = rules[element]
+        currentRule = rules[ruleName]
         dependencies = currentRule[CFG_DEPENDENCIES]
 
         type = getType dependencies
@@ -158,21 +176,21 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
 
         else if type is 'array'
             result = []
-            # parse each array element
+            # parse each array ruleName
             _(dependencies).each (element, index) ->
-                dependency = dependencies[index]
+                dependency = element
                 type = getType dependency
                 if type is 'string'
                     result[index] = dependency
                 else if type is 'function'
                     result[index] = dependency()
                 else
-                    throwError "#{element}.#{CFG_DEPENDENCIES}[index]", "string or function", type   
+                    throwError "#{ruleName}.#{CFG_DEPENDENCIES}.#{index}", "string or function", type
                 
             result = result.join " "
 
         else 
-            throwError "#{element}.#{CFG_DEPENDENCIES}", "string, function, or array", type
+            throwError "#{ruleName}.#{CFG_DEPENDENCIES}", "string, function, or array", type
 
         if currentRule[CFG_FIRST_DEPENDENCY]?
             result = currentRule[CFG_FIRST_DEPENDENCY] + " " + result
@@ -181,9 +199,9 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
 
 
     # parse the CFG_ACTIONS keys
-    _(ruleNameList).each (element) ->
+    _(ruleNameList).each (ruleName) ->
         result = undefined # evaluated target
-        currentRule = rules[element]
+        currentRule = rules[ruleName]
         actions = currentRule[CFG_ACTIONS]
         if not actions?
             debug "no #{CFG_ACTIONS} defined for rule #{CFG_ACTIONS}"
@@ -203,19 +221,19 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             result = []
             # parse each array element
             _(actions).each (element, index) ->
-                action = actions[index]
+                action = element
                 type = getType action
                 if type is 'string'
                     result[index] = action
                 else if type is 'function'
                     result[index] = action()
                 else
-                    throwError "#{element}.#{CFG_ACTIONS}#{index}", "string or function", type
+                    throwError "#{ruleName}.#{CFG_ACTIONS}#{index}", "string or function", type
                 
             result = result.join "\n\t"
 
         else 
-            throwError "#{element}.#{CFG_ACTIONS}", "string, function, or array", type
+            throwError "#{ruleName}.#{CFG_ACTIONS}", "string, function, or array", type
 
         currentRule[CFG_ACTIONS] = result
 
@@ -232,16 +250,16 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
 writeMkFile = (rules, ruleNameList, cb) ->
     buffer = ""
     globalTargets = []
-    _(ruleNameList).each (element) ->
+    _(ruleNameList).each (ruleName) ->
         localBuffer = ""
-        currentRule = rules[element]
+        currentRule = rules[ruleName]
         target = currentRule[CFG_TARGET]
         if currentRule[CFG_GLOBAL_TARGET]? and currentRule[CFG_GLOBAL_TARGET] is true
             globalTargets.push target
         dependencies = currentRule[CFG_DEPENDENCIES]
         actions = currentRule[CFG_ACTIONS]
         localBuffer 
-        localBuffer += "# #{element}\n"
+        localBuffer += "# #{ruleName}\n"
         localBuffer += "#{target}: #{dependencies}\n"
         if actions?
             localBuffer += "\t#{actions}\n\n"
@@ -304,19 +322,25 @@ keyValues = (obj, opts) ->
     return result
 
 lookup = (context, key) ->
-    if not context?
-        debug "context is undefined or null, cannot retreive #{key}"
-        throw new Error ""
     if key.indexOf('.') is -1
-         return context[key]
+        if not context[key]?
+            err = new Error "key '#{key}' is null of context '#{context}'"
+            err.code = 'KEY_NOT_FOUND'
+            return throw err
+
+        return context[key]
      else
         # if context had nested keys, use recursive strategy
         [firstKey, rest...] = key.split '.'
-        try
-            return lookup context[firstKey], rest.join('.')
-        catch err
+
+        if context[firstKey]?
             lastKey = _(rest).last()
-            throw new Error "key '#{lastKey}' is null in '#{key}'"
+            err = new Error "key '#{lastKey}' is null in '#{key}'"
+            err.code = 'KEY_NOT_FOUND'
+            return throw err
+
+        return lookup context[firstKey], rest.join('.')
+
         
         
 
