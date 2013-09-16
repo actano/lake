@@ -5,7 +5,7 @@ async = require 'async'
 debug = require('debug')('lake.create_mk')
 
 
-MANIFEST_FILE_NAME = "Manifest"
+MANIFEST_FILE_NAME = "Manifest.coffee"
 MAKEFILE_MK_NAME = "dev_Makefile.mk"
 BUILD_SUFFIX = 'build'
 
@@ -58,6 +58,20 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         actions: [
             "mkdir -p #{featureBuildPath}"
             "$(COMPONENT_GENERATOR) $< $@"
+        ]
+    rules["client.js"] =
+        target: path.join featureBuildPath, "client.js"
+        dependencies: mapPath manifest.client.styles, featurePath
+        actions: [
+            "mkdir -p #{path.join featureBuildPath, "styles"}"
+            "$(STYLUSC) $(STYLUS_FLAGS) --out #{path.join featureBuildPath, "styles"} $<"
+        ]
+    rules["styles"] =
+        target: path.join featureBuildPath, "styles", "#{manifest.name}.css"
+        dependencies: mapPath manifest.client.styles, featurePath
+        actions: [
+            "mkdir -p #{path.join featureBuildPath, "styles"}"
+            "$(STYLUSC) $(STYLUS_FLAGS) --out #{path.join featureBuildPath, "styles"} $<"
         ]
 
     rules["build"] =
@@ -333,7 +347,7 @@ lookup = (context, key) ->
             return throw err
 
         return context[key]
-     else
+    else
         # if context had nested keys, use recursive strategy
         [firstKey, rest...] = key.split '.'
 
@@ -345,8 +359,11 @@ lookup = (context, key) ->
 
         return lookup context[firstKey], rest.join('.')
 
-        
-        
+mapPath = (src, featureBuildPath, hook) ->
+    _(src).map (item) ->
+        buildPathItem = path.join featureBuildPath, item
+
+
 
 getTarget = (ruleName) ->
     debug "checking for rule: #{ruleName}"
