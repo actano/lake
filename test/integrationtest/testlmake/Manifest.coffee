@@ -6,21 +6,21 @@ module.exports =
     version: "0.0.1"
 
     license: "MIT"
-    description: ""
+    description: "a"
     keywords: []
 
     documentation: ["Readme.md"]
     library: true
 
     htdocs:
-        page:
-            html: ["views/demo.jade"]
+        demo:
+            html: "views/demo.jade"
             dependencies:
                 templates: JADE_TEMPLATES
             images: []
 
         widget:
-            html: ["views/widget.jade"]
+            html: "views/widget.jade"
             dependencies:
                 templates: ["views/markup.jade", "../testlmake-dep/views/widget.jade"]
             images: []
