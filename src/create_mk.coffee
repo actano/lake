@@ -51,20 +51,11 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
     componentPath = path.join featureBuildPath, "components"
 
     rules = {}
-    rules["component.json"] =
-        globaleTarget: true
-        target: path.join featureBuildPath, "component.json"
-        dependencies: manifestPath
-        actions: [
-            "mkdir -p #{featureBuildPath}"
-            "$(COMPONENT_GENERATOR) $< $@"
-        ]
     rules["client.js"] =
         target: path.join featureBuildPath, "client.js"
-        dependencies: mapPath manifest.client.styles, featurePath
+        dependencies: mapPath manifest.client.scripts, featurePath
         actions: [
-            "mkdir -p #{path.join featureBuildPath, "styles"}"
-            "$(STYLUSC) $(STYLUS_FLAGS) --out #{path.join featureBuildPath, "styles"} $<"
+            "$(COFFEEC) -c $(COFFEE_FLAGS) --output #{featureBuildPath} $<"
         ]
     rules["styles"] =
         target: path.join featureBuildPath, "styles", "#{manifest.name}.css"
@@ -72,6 +63,21 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         actions: [
             "mkdir -p #{path.join featureBuildPath, "styles"}"
             "$(STYLUSC) $(STYLUS_FLAGS) --out #{path.join featureBuildPath, "styles"} $<"
+        ]
+    rules["component.json"] =
+        target: path.join featureBuildPath, "component.json"
+        dependencies: manifestPath
+        actions: [
+            "mkdir -p #{featureBuildPath}"
+            "$(COMPONENT_GENERATOR) $< $@"
+        ]
+    rules["components"] =
+        target: path.join featureBuildPath, "components"
+        dependencies: -> getTarget "component.json"
+        actions: [
+            "cd #{featureBuildPath} && $(COMPONENT_INSTALL) $(COMPONENT_INSTALL_FLAGS) || rm -rf #{path.join featurePath,"components"}"
+            "test -d #{path.join featurePath,"components"}"
+            "touch #{path.join featurePath,"components"}"
         ]
 
     rules["runtime"] =
@@ -85,6 +91,18 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         # integrationtest/testlmake/component.json
         actions: "rsync -rR $^ #{path.join 'runtime', featureBuildPath}"
 
+    for jadeView in manifest.client.templates
+        rules["client.template.#{jadeView}"] =
+            target: path.join featureBuildPath, jadeView
+            dependencies: path.join featurePath, jadeView
+            actions: [
+                "@mkdir -p #{path.join featureBuildPath, "views"}"
+                "@echo \"module.exports=\" > $@"
+                "$(JADEC) --client --path $< < $< >> $@"
+            ]
+            targetRegex: 
+                pattern:/\.jade/
+                replacement:".js"
 
 
     rules["component.install"] =
@@ -173,7 +191,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
 
             # TODO: let the user choose, if he wants replace only basename or fullname?
             dirName = path.dirname result
-            fileName = path.baseneme result
+            fileName = path.basename result
             newFileName = fileName.replace pattern, replacement
             result = path.join dirName, newFileName
 
@@ -356,7 +374,6 @@ lookup = (context, key) ->
         [firstKey, rest...] = key.split '.'
 
         if not context[firstKey]?
-            lastKey = _(rest).last()
             #TODO: error message is not correct
             err = new Error "key '#{firstKey}' is null in '#{key}'"
             err.code = 'KEY_NOT_FOUND'
