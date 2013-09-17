@@ -17,8 +17,6 @@ CFG_DEPENDENCIES = "dependencies"
 CFG_ACTIONS = "actions"
 CFG_TARGET_REGEX = "targetRegex"
 CFG_GLOBAL_TARGET = "globalTarget"
-CFG_TARGET_AS_FIRST_DEP = "targetAsFirstDependency"
-CFG_FIRST_DEPENDENCY = "firstDependecy"
 
 
 projectRoot = undefined             # absolute path: /Users/john/projectX
@@ -58,15 +56,19 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
     ###
 
     rules = {}
+
+    #TODO: need to iterate over client.scripts
     rules["client.js"] =
         target: path.join featureBuildPath, "client.js"
-        dependencies: mapPath manifest.client.scripts, featurePath
+        dependencies: prefixPaths manifest.client.scripts, featurePath
         actions: [
             "$(COFFEEC) -c $(COFFEE_FLAGS) --output #{featureBuildPath} $<"
         ]
+
+
     rules["styles"] =
         target: path.join featureBuildPath, "styles", "#{manifest.name}.css"
-        dependencies: mapPath manifest.client.styles, featurePath
+        dependencies: prefixPaths manifest.client.styles, featurePath
         actions: [
             "mkdir -p #{path.join featureBuildPath, "styles"}"
             "$(STYLUSC) $(STYLUS_FLAGS) --out #{path.join featureBuildPath, "styles"} $<"
@@ -80,7 +82,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         ]
     rules["components"] =
         target: path.join featureBuildPath, "components"
-        dependencies: -> getTarget "component.json"
+        dependencies: -> getTargetOfRule "component.json"
         actions: [
             "cd #{featureBuildPath} && $(COMPONENT_INSTALL) $(COMPONENT_INSTALL_FLAGS) || rm -rf #{path.join featurePath,"components"}"
             "test -d #{path.join featurePath,"components"}"
@@ -113,12 +115,13 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         lib/usermanagement/build/client.js lib/usermanagement/build/styles/usermanagement.css lib/usermanagement/build/views/entry-partial.js lib/usermanagement/build/views/firstrow.js
 
     ###
-    rules[featureName] =
+    rules[featurePath] =
+        globalTarget: true
         target: [path.join featureBuildPath, "#{featureName}.js", path.join featureBuildPath, "#{featureName}.css"]
         dependencies: [
-            getTarget "client.js"
-            getTarget "#{featureName}.css"
-            getTarget "client.template.*" #TODO: implement a wildcard string
+            getTargetOfRule "client.js"
+            getTargetOfRule "#{featureName}.css"
+            getTargetOfRule "client.template.*" #TODO: implement a wildcard string
 
         ]
 
@@ -126,7 +129,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         target: path.join featureBuildPath, 'runtime'
         dependencies: () ->
             keys = _(rules).keys()
-            targets = (getTarget ruleName for ruleName in keys)
+            targets = (getTargetOfRule ruleName for ruleName in keys)
         actions: "rsync -rR $^ #{path.join 'runtime', featureBuildPath}"
 
     # partials
@@ -158,21 +161,22 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         target: path.join featurePath ,'integration_test'
         dependencies: featureBuildPath
         actions: () ->
-            mapPath manifest.integrationTests.mocha, featureBuildPath, (item) ->
+            prefixPaths manifest.integrationTests.mocha, featureBuildPath, (item) ->
                 "$(MOCHA) -R $(MOCHA_REPORTER) --compilers coffee:coffee-script #{item}"
 
     # dynamic
     _(manifest.htdocs).each (value, key) ->
         rules["htdocs.#{key}"] =
             condition: () -> lookup manifest, "htdocs.#{key}"
-            target: path.join featureBuildPath, (lookup manifest, "htdocs.#{key}.html")
-            #dependencies: mapPath (lookup manifest, "htdocs.#{key}.dependencies.templates"), featurePath
-            dependencies: []
+            #TODO: helper function to replace extension of filename with basename
+            target: path.join featureBuildPath, replaceExtension((lookup manifest, "htdocs.#{key}.html"), 'js')
+            #dependencies: prefixPaths (lookup manifest, "htdocs.#{key}.dependencies.templates"), featurePath
+            dependencies: [
+                lookup manifest, "htdocs.#{key}"
+                #TODO: remaining dependencies
+            ]
             actions: "$(JADEC) $< --pretty --obj {\"name\":\"#{manifest.name}\"} --out #{featureBuildPath}"
-            targetAsFirstDependency: true
-            targetRegex:
-                pattern: /\.jade/
-                replacement: '.html'
+
 
     ###
        RULES END
@@ -232,29 +236,10 @@ parseTargets = ->
         else
             throwError "#{ruleName}.#{CFG_TARGET}", "string, array or function", type
 
-        if currentRule[CFG_TARGET_AS_FIRST_DEP]? and currentRule[CFG_TARGET_AS_FIRST_DEP] is true
-            currentRule[CFG_FIRST_DEPENDENCY] = result #
-
-        if currentRule[CFG_TARGET_REGEX]?
-            obj = currentRule[CFG_TARGET_REGEX]
-            pattern = undefined
-            replacement = undefined
-            try
-                pattern = obj.pattern
-                replacement = obj.replacement
-                if not pattern? and not replacement?
-                    throw new Error ""
-            catch err
-                throwError "#{ruleName}.#{CFG_TARGET_REGEX}", "{pattern, replacement}", obj
-
-            # TODO: let the user choose, if he wants replace only basename or fullname?
-            dirName = path.dirname result
-            fileName = path.basename result
-            newFileName = fileName.replace pattern, replacement
-            result = path.join dirName, newFileName
-
         currentRule[CFG_TARGET] = result
 
+replaceExtension = (sourcePath, newExtension) ->
+    path.join (path.dirname sourcePath), ((path.basename sourcePath, path.extname sourcePath) + newExtension)
 
 parseDependencies = ->
     # parse the CFG_DEPENDENCIES keys
@@ -433,7 +418,7 @@ lookup = (context, key) ->
 
         return lookup context[firstKey], rest.join('.')
 
-mapPath = (src, prefixPath, hook) ->
+prefixPaths = (src, prefixPath, hook) ->
     _(src).map (item) ->
         buildPathItem = path.join prefixPath, item
         if hook?
@@ -442,7 +427,7 @@ mapPath = (src, prefixPath, hook) ->
         return buildPathItem
 
 
-getTarget = (ruleName) ->
+getTargetOfRule = (ruleName) ->
     debug "checking for rule: #{ruleName}"
     debug rules
     rule = rules[ruleName]
@@ -460,8 +445,9 @@ getType = (param) ->
         return 'object'
     return typeof param
 
+#TODO: rename to ~ throwTypeError
 throwError = (key, expected, type) ->
-    throw new Error "expected #{expected} for #{key}, but get #{type}"
+    throw new TypeError "expected #{expected} for #{key}, but get #{type}"
 
 module.exports = createLocalMakefileInc
 
