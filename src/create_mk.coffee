@@ -48,9 +48,14 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         console.error "#{MANIFEST_FILE_NAME} for #{featurePath} cannot be parsed: #{err.message}"
         throw err
 
-    # Makfile rules
+
+    # custom variables
 
     componentPath = path.join featureBuildPath, "components"
+
+    ###
+       RULES START
+    ###
 
     rules = {}
     rules["client.js"] =
@@ -122,10 +127,6 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         dependencies: () ->
             keys = _(rules).keys()
             targets = (getTarget ruleName for ruleName in keys)
-
-        # TODO: replace the 'build/' with an empty string
-        # integrationtest/testlmake/build/component.json =>
-        # integrationtest/testlmake/component.json
         actions: "rsync -rR $^ #{path.join 'runtime', featureBuildPath}"
 
     # partials
@@ -173,7 +174,26 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
                 pattern: /\.jade/
                 replacement: '.html'
 
+    ###
+       RULES END
+    ###
 
+    parseTargets()
+    parseDependencies()
+    parseActions()
+
+
+    console.log rules
+
+    writeMkFile rules, ruleNameList, (err, relativeMkPath, globalTargets) ->
+        if err?
+            return outerCb err
+        console.log "########################################"
+        outerCb new Error "create_mk is not fully implemented"
+        #outerCb err, relativeMkPath, globalTargets
+
+
+parseTargets = ->
     ruleNameList = _(rules).keys()
 
     # parse the CFG_TARGET keys
@@ -213,7 +233,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             throwError "#{ruleName}.#{CFG_TARGET}", "string, array or function", type
 
         if currentRule[CFG_TARGET_AS_FIRST_DEP]? and currentRule[CFG_TARGET_AS_FIRST_DEP] is true
-            currentRule[CFG_FIRST_DEPENDENCY] = result # 
+            currentRule[CFG_FIRST_DEPENDENCY] = result #
 
         if currentRule[CFG_TARGET_REGEX]?
             obj = currentRule[CFG_TARGET_REGEX]
@@ -236,6 +256,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         currentRule[CFG_TARGET] = result
 
 
+parseDependencies = ->
     # parse the CFG_DEPENDENCIES keys
     _(ruleNameList).each (ruleName) ->
         result = undefined # evaluated target
@@ -264,10 +285,10 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
                     result[index] = dependency()
                 else
                     throwError "#{ruleName}.#{CFG_DEPENDENCIES}.#{index}", "string or function", type
-                
+
             result = result.join " "
 
-        else 
+        else
             throwError "#{ruleName}.#{CFG_DEPENDENCIES}", "string, function, or array", type
 
         if currentRule[CFG_FIRST_DEPENDENCY]?
@@ -275,7 +296,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
 
         currentRule[CFG_DEPENDENCIES] = result
 
-
+parseActions = ->
     # parse the CFG_ACTIONS keys
     _(ruleNameList).each (ruleName) ->
         result = undefined # evaluated target
@@ -307,23 +328,15 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
                     result[index] = action()
                 else
                     throwError "#{ruleName}.#{CFG_ACTIONS}#{index}", "string or function", type
-                
+
             result = result.join "\n\t"
 
-        else 
+        else
             throwError "#{ruleName}.#{CFG_ACTIONS}", "string, function, or array", type
 
         currentRule[CFG_ACTIONS] = result
 
 
-    console.log rules
-
-    writeMkFile rules, ruleNameList, (err, relativeMkPath, globalTargets) ->
-        if err?
-            return outerCb err
-        console.log "########################################"
-        outerCb new Error "create_mk is not fully implemented"
-        #outerCb err, relativeMkPath, globalTargets
 
 writeMkFile = (rules, ruleNameList, cb) ->
     buffer = ""
