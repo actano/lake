@@ -8,6 +8,7 @@ debug = require('debug')('lake.create_mk')
 MANIFEST_FILE_NAME = "Manifest.coffee"
 MAKEFILE_MK_NAME = "dev_Makefile.mk"
 BUILD_SUFFIX = 'build'
+LOCAL_COMPONENTS = path.join "build", "local_components"
 
 # config key names, for better refactoring
 CFG_CONDITION = "condition"
@@ -22,6 +23,7 @@ CFG_FIRST_DEPENDENCY = "firstDependecy"
 
 projectRoot = undefined             # absolute path: /Users/john/projectX
 absoluteFeaturePath = undefined     # absolute path: /Users/john/projectX/foo/bar/featureA
+featureName = undefined             # for example: featureA
 featurePath = undefined             # for example: foo/bar/featureA
 featureBuildPath = undefined        # for example: foo/var/featureA/build
 manifestPath = undefined            # for example: foo/bar/featureA/Manifest.coffee
@@ -36,7 +38,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
     absoluteFeaturePath = fp
     featurePath = path.relative projectRoot, absoluteFeaturePath
     featureBuildPath = path.join featurePath, BUILD_SUFFIX
-
+    featureName = path.basename featurePath
     # check manifest
     absoluteManifestPath = path.join absoluteFeaturePath, MANIFEST_FILE_NAME
     manifestPath = path.relative projectRoot, absoluteManifestPath # relative manifest path
@@ -80,6 +82,41 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
             "touch #{path.join featurePath,"components"}"
         ]
 
+    ###
+        build/local_components/lib/usermanagement:
+        build/local_components/lib/bind-jade build/local_components/lib/widgetevents build/local_components/lib/i18n lib/usermanagement/build/component.json lib/usermanagement/build/client.js lib/usermanagement/build/styles/usermanagement.css lib/usermanagement/build/views/entry-partial.js lib/usermanagement/build/views/firstrow.js
+        # local dependencies
+        # component.json
+        # client.js
+        # <NAME>.css
+        # partials / templates/views
+
+
+    mkdir -p build/local_components/lib/usermanagement
+        cp -r lib/usermanagement/build/* build/local_components/lib/usermanagement
+        touch build/local_components/lib/usermanagement
+    ###
+    rules["local_components"] =
+        target: path.join LOCAL_COMPONENTS, featurePath
+        dependencies: [] # TODO: analyse and clean up current Makefile.mk
+        action: []
+
+    ###
+        lib/usermanagement/build/usermanagement.js lib/usermanagement/build/usermanagement.css: build/local_components/lib/bind-jade build/local_components/lib/widgetevents build/local_components/lib/i18n lib/usermanagement/build/components lib/usermanagement/build/client.js lib/usermanagement/build/styles/usermanagement.css lib/usermanagement/build/views/entry-partial.js lib/usermanagement/build/views/firstrow.js
+        cd lib/usermanagement/build && $(COMPONENT_BUILD) $(COMPONENT_BUILD_FLAGS) --name usermanagement --standalone usermanagement -v -o ./
+
+        lib/usermanagement/build/client.js lib/usermanagement/build/styles/usermanagement.css lib/usermanagement/build/views/entry-partial.js lib/usermanagement/build/views/firstrow.js
+
+    ###
+    rules[featureName] =
+        target: [path.join featureBuildPath, "#{featureName}.js", path.join featureBuildPath, "#{featureName}.css"]
+        dependencies: [
+            getTarget "client.js"
+            getTarget "#{featureName}.css"
+            getTarget "client.template.*" #TODO: implement a wildcard string
+
+        ]
+
     rules["runtime"] =
         target: path.join featureBuildPath, 'runtime'
         dependencies: () ->
@@ -91,6 +128,7 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         # integrationtest/testlmake/component.json
         actions: "rsync -rR $^ #{path.join 'runtime', featureBuildPath}"
 
+    # partials
     for jadeView in manifest.client.templates
         rules["client.template.#{jadeView}"] =
             target: path.join featureBuildPath, jadeView
@@ -329,6 +367,7 @@ writeMkFile = (rules, ruleNameList, cb) ->
 ###
 keyValues = (obj, opts) ->
     if not opts?
+        # this is package.json / component.json style
         opts = {
             keyValueSeperator: ':'
             keyValueWrapper: ''
