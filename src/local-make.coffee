@@ -45,8 +45,8 @@ waterFallTasks = waterFallTasks.concat [
 unless parsedArgs.preventMakefileRebuild
     waterFallTasks.push (projectRoot, cb) ->
         debug("createMakefiles")
-        createMakefiles ->
-            cb null, projectRoot
+        createMakefiles (err) ->
+            cb err, projectRoot
             
 waterFallTasks = waterFallTasks.concat [    
     (projectRoot, cb) ->
