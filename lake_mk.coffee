@@ -16,9 +16,9 @@
 lookup = require 'foobar'
 
 lake # is immutable
-    config
-    projectRoot
-    getBuildPath(feature)
+config
+projectRoot
+getBuildPath(feature)
 
 
 module.exports =
@@ -44,7 +44,7 @@ class RuleBook
 
 
     getRuleById = (id) ->
-        return factories[id](manifest, this)
+    return factories[id](manifest, this)
 
 
 for rule in ruleBook.rules
