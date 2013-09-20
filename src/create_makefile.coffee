@@ -15,6 +15,7 @@ createLocalMakefileInc = require './create_mk'
 
 {findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'
 
+#TODO: ask regular why there is a second param 'globalTargets'
 mergeObject = (featureTargets, globalTargets) ->
     _(featureTargets).each (value, key, list) ->
         if globalTargets[key]?
