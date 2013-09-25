@@ -1,6 +1,6 @@
 {inspect} = require 'util'
 debug = require('debug')('lake.rulebook')
-
+{_} = require 'underscore'
 
 class RuleBook
 
@@ -33,6 +33,7 @@ class RuleBook
 
         @ruleFactories[id] =
             factory: wrapper.factory
+            factoryParams: wrapper.factoryParams
             tags: wrapper.tags
             init: false
             processed: false
@@ -61,17 +62,27 @@ class RuleBook
             throw new Error "no rule defined for id: #{id}"
 
         if wrapper.processed is true
+
             return wrapper.factory()
 
         if wrapper.init is true
             throw new Error "circular dependency found for id: #{id}\nbuild order: #{@factoryOrder.join ' -> '}"
 
         wrapper.init = true
-        tupel = wrapper.factory() # targets, dependencies, actions
+        tupel = undefined
+        if wrapper.factoryParams?
+            console.log "id: #{id} has params for factory(#{wrapper.factoryParams})"
+            tupel = wrapper.factory(wrapper.factoryParams)
+        else
+            tupel = wrapper.factory() # targets, dependencies, actions
 
         resolvedValues = {}
         for key in Object.keys tupel
-            resolvedValues[key] = tupel[key]
+            if _(tupel[key]).isArray()
+                resolvedValues[key] = _(tupel[key]).flatten()
+            else
+                resolvedValues[key] = tupel[key]
+
             resolvedValues["tags"] = wrapper.tags
 
         wrapper.factory = ->

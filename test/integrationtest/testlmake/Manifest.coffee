@@ -6,11 +6,10 @@ module.exports =
     version: "0.0.1"
 
     license: "MIT"
-    description: "a"
+    description: "a feature description"
     keywords: []
 
     documentation: ["Readme.md"]
-    library: true
 
     htdocs:
         demo:
@@ -22,7 +21,10 @@ module.exports =
         widget:
             html: "views/widget.jade"
             dependencies:
-                templates: ["views/markup.jade", "../testlmake-dep/views/widget.jade"]
+                templates: [
+                    "views/markup.jade",
+                    "../testlmake-dep/views/widget.jade"
+                ]
             images: []
 
     ###
@@ -53,8 +55,7 @@ module.exports =
         main: "client.coffee"
         styles: ["styles/testlmake.styl"]
         templates: ["views/list-entry-partial.jade"]
-        views:
-            dirs: ["views"]
+
 
         tests:
             # A single test.html file is created from the specified template.
@@ -67,33 +68,32 @@ module.exports =
                 html: "test/test.jade"
                 prerequisits: JADE_TEMPLATES
 
+                assets:
+                    styles:
+                      ["build/components/visionmedia-mocha/mocha.css"]
+                    scripts:
+                      ["build/components/visionmedia-mocha/mocha.js",
+                       "build/components/chaijs-chai/lib/chai.js",
+                       "../../vendor/sinon-1.6.0.js",
+                       "../../vendor/jquery-1.9.1.js"
+                      ]
                 scripts: [
                     "test/testlmake-browser.coffee"
                 ]
 
-            mocha: [
-                "test/testlmake-phantom.coffee"
-            ]
 
     server:
-        scripts:
-            files: ["server.coffee"] # must be a file
+        scripts: ["server.coffee"]
         mountPoint: "/testlmake"
-        tests:
-            integration: [
-                "test/testlmake-integration.coffee"
-            ]
-            unit: [
-                "test/testlmake-unit.coffee"
-            ]
+        tests: [
+            "test/testlmake-unit.coffee"
+        ]
 
     database:
         designDocuments: []
         bucket: []
 
-
-
-
-
-
-
+    integrationTests:
+        mocha: [
+            "test/testlmake-integration.coffee"
+        ]

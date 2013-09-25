@@ -1,0 +1,11 @@
+// add your config here.
+// created on Wed Sep 11 2013 17:29:16 GMT+0200 (CEST)
+module.exports = {
+    lakeDir: __dirname,
+    helper: "../src/rulebook_helper",
+    buildDir: "build",
+    localComponents: "build/local_components",
+    ruleCollection: [
+        "rules.coffee"
+    ]
+}
