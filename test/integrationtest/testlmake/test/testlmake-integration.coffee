@@ -8,7 +8,7 @@ request = require 'supertest'
 path = require 'path'
 {spawn} = require 'child_process'
 async = require 'async'
-debug = require('debug')('actano.rplanx.create_local_make_inc-test')
+debug = require('debug')('lake.create_local_make_inc-test')
 fs = require 'fs'
 
 testcases = require '../../../test_helper'

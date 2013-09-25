@@ -33,7 +33,7 @@ describe 'testing lake by creating a boilerplate feature and calling lake', ->
             expect(stdout).to.have.string("Usage: make_feature.coffee <name>")
             done()
 
-    it "creates a folder actano-rplan/lib/ with the given feature name", (done) ->
+    it "creates a folder with the given feature name", (done) ->
         exec "#{makeFeatureScript} #{env.name}", (err)->
             expect(err).to.be.equal(null)
             fs.stat env.libPath, (err,stat) ->
