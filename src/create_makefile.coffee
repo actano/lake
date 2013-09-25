@@ -51,7 +51,11 @@ createMakefiles = (cb) ->
                 cb null, binPath, projectRoot, list
 
         (binPath, projectRoot, featureList, cb) ->
+            lakeConfigPath = path.join projectRoot, ".lake", "config"
+            unless (fs.existsSync lakeConfigPath)
+                throw new Error "lake config not found at #{lakeConfigPath}"
 
+            lakeConfig = require lakeConfigPath
             makefileIncPathList = []
             globalTargets = {}
             stopQueue = false
@@ -63,7 +67,7 @@ createMakefiles = (cb) ->
 
                 cwd = path.join projectRoot, featurePath
                 console.log "Creating Makefile.mk for #{featurePath}"
-                createLocalMakefileInc projectRoot, cwd, (err, makefileContent, globalFeatureTargets) ->
+                createLocalMakefileInc lakeConfig, projectRoot, cwd, (err, makefileContent, globalFeatureTargets) ->
                     if err
                         console.error err.message
                         stopQueue = true
@@ -71,7 +75,7 @@ createMakefiles = (cb) ->
 
                     mergeObject globalFeatureTargets, globalTargets
                     if newApi is true
-                        queueCb null, makefileContent # this is the path for newApi
+                        queueCb null, makefileContent # this is the path for newApi, Makefile.mk already written
                     else
                         makefileMkPath = path.join featurePath, "build", "Makefile.mk"
                         absolutePath = path.join projectRoot, makefileMkPath

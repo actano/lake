@@ -67,7 +67,7 @@ class RuleBook
             throw new Error "circular dependency found for id: #{id}\nbuild order: #{@factoryOrder.join ' -> '}"
 
         wrapper.init = true
-        tupel = wrapper.factory()
+        tupel = wrapper.factory() # targets, dependencies, actions
 
         resolvedValues = {}
         for key in Object.keys tupel

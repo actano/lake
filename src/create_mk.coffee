@@ -31,7 +31,7 @@ manifest = undefined                # manifest object
 rules = undefined                   # container objects for all rule configration
 
 
-createLocalMakefileInc = (pr, fp, outerCb) ->
+createLocalMakefileInc = (lakeConfig, pr, fp, outerCb) ->
 
     projectRoot = pr
     absoluteFeaturePath = fp
@@ -48,11 +48,15 @@ createLocalMakefileInc = (pr, fp, outerCb) ->
         throw err
 
     ruleBook = new RuleBook()
-    rules = require './rules'
-    ruleList = rules.addRules {projectRoot, buildDir: 'build'}, featurePath, manifest, ruleBook
+    for ruleFile in lakeConfig.ruleCollection
+        ruleFilePath = path.join projectRoot, ruleFile
+        unless fs.existsSync ruleFilePath
+            throw new Error "rule file not found at #{ruleFilePath}"
+        rules = require ruleFilePath
+        ruleList = rules.addRules lakeConfig, featurePath, manifest, ruleBook
 
-    # add rules into ruleBook
-    ruleBook.add id, wrapper for id, wrapper of ruleList
+        # add rules into ruleBook
+        ruleBook.add id, wrapper for id, wrapper of ruleList
 
     # evaluate the rules, call 'factory()'
     ruleBook.resolveAllFactories()

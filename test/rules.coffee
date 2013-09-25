@@ -1,12 +1,12 @@
 path = require 'path'
 
-{replaceExtension, lookup, prefixPaths} = require './rulebook_helper'
+
 
 module.exports =
     title: 'all'
     description: "actano-rplanx-stack"
     addRules: (lake, featurePath, manifest, rb) ->
-
+        {replaceExtension, lookup, prefixPaths} = require lake.helper
         buildPath = path.join lake.buildDir, featurePath
 
         rules =

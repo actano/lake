@@ -59,7 +59,7 @@ findProjectRoot (err, existingProjectRoot) ->
 
     # write an empty config file
     debug "writing .lake/config"
-    fs.writeFileSync ".lake/config", "; add your config here.\n; created on #{new Date()}\n"
+    fs.writeFileSync ".lake/config", "# add your config here.\n; created on #{new Date()}\n"
 
     # write an empty features file
     debug "writing .lake/features"
