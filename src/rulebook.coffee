@@ -69,12 +69,7 @@ class RuleBook
             throw new Error "circular dependency found for id: #{id}\nbuild order: #{@factoryOrder.join ' -> '}"
 
         wrapper.init = true
-        tupel = undefined
-        if wrapper.factoryParams?
-            console.log "id: #{id} has params for factory(#{wrapper.factoryParams})"
-            tupel = wrapper.factory(wrapper.factoryParams)
-        else
-            tupel = wrapper.factory() # targets, dependencies, actions
+        tupel = wrapper.factory(wrapper.factoryParams) # targets, dependencies, actions
 
         resolvedValues = {}
         for key in Object.keys tupel

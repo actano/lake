@@ -1,12 +1,11 @@
 path = require 'path'
-
+{resolveFeatureRelativePaths, replaceExtension, lookup, concatPaths} = require "../src/rulebook_helper"
 
 module.exports =
     title: 'all'
     description: "building web application with NodeJS, Couchbase, Component, CoffeeScript, Jade, Eco, Stylus and Mocha, Chai, PhantomJS for testing"
     addRules: (lake, featurePath, manifest, rb) ->
 
-        {replaceExtension, lookup, concatPaths} = require lake.helper
         buildPath = path.join featurePath, lake.buildDir
         componentsPath = path.join buildPath, "components"
         styluesBuildPath = path.join buildPath, "stylus"
@@ -61,14 +60,14 @@ module.exports =
 
 
             "component-build":
-                condition: componentBuildCondition manifest
+                condition: manifest.client?.dependencies?.production?.local? and manifest.client?.scripts?
                 tags: ["client"]
                 factory: ->
                     targets: [path.join(featurePath, manifest.name) + ".js", path.join(featurePath, manifest.name) + ".css"]
                     dependencies: [
                         rb.getRuleById("component.json").targets
                         # NOTE: path for foreign components is relative, need to resolve it by build the absolute before
-                        resolveFeatureRelativePaths concatPaths, manifest.client.dependencies.production.local, projectRoot, featurePath
+                        resolveFeatureRelativePaths manifest.client.dependencies.production.local, projectRoot, featurePath
                         rb.getRuleById("coffee-client").targets
                         rb.getRuleById("sylus").targets
 
@@ -91,7 +90,8 @@ module.exports =
 
         for jadeTemplate in manifest.client.templates
             rules["jade.template.#{jadeTemplate}"] =
-                factory: ->
+                factoryParams: jadeTemplate
+                factory: (jadeTemplate) ->
                     targets: path.join buildPath, replaceExtension(jadeTemplate, '.js')
                     dependencies: path.join featurePath, jadeTemplate
                     actions: [
@@ -107,20 +107,9 @@ module.exports =
                     target: path.join buildPath, replaceExtension((lookup manifest, "htdocs.#{key}.html"), '.html')
                     # NOTE: path for foreign feature dependencies is relative, need to resolve it by build the absolute before
                     dependencies: [
-                        resolveFeatureRelativePaths concatPaths, lookup(manifest, "htdocs.#{key}.dependencies.templates"), projectRoot, featurePath
+                        resolveFeatureRelativePaths lookup(manifest, "htdocs.#{key}.dependencies.templates"), projectRoot, featurePath
                     ]
                     actions: "$(JADEC) $< --pretty --obj {\"name\":\"#{manifest.name}\"} --out #{buildPath}"
 
         return rules
 
-resolveFeatureRelativePaths = (concatPaths, array, projectRoot, featurePath) ->
-    concatPaths array, {}, (relativePath) ->
-        absoluteFeaturePath = path.join projectRoot, featurePath
-        absolutePath = path.resolve absoluteFeaturePath, relativePath
-        return path.relative projectRoot, absolutePath
-
-componentBuildCondition = (manifest) ->
-    if manifest.client?.dependencies?.production?.local? and manifest.client?.scripts?
-        return true
-    else
-        return false

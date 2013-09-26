@@ -2,7 +2,8 @@
 path = require 'path'
 
 ###
-   replace the extension of a file (have to be dot seperated), ignoring the rest of the path (directories)
+    replace the extension of a file (have to be dot seperated), ignoring the rest of the path (directories)
+    last parameter needs to be in this format: '.html'
 ###
 module.exports.replaceExtension = (sourcePath, newExtension) ->
     path.join (path.dirname sourcePath), ((path.basename sourcePath, path.extname sourcePath) + newExtension)
@@ -46,3 +47,20 @@ module.exports.concatPaths = (array, opt, hook) ->
             buildPathItem =  hook buildPathItem
 
         return buildPathItem
+
+###
+    if a path (in a manifest) is relative to its feautre with a '../'
+    it's necessary to resolve the absolute path
+    and convert then into a relative path (relative to the project root)
+    example:
+    lib/foo/featureA has a dependency to ../featureB and ../../bar/featureC
+    the dependencies have to be resolved into
+    lib/foo/featureB and lib/bar/featureC
+
+###
+module.exports.resolveFeatureRelativePaths = (array, projectRoot, featurePath) ->
+    module.exports.concatPaths array, {}, (relativePath) ->
+        absoluteFeaturePath = path.join projectRoot, featurePath
+        absolutePath = path.resolve absoluteFeaturePath, relativePath
+        return path.relative projectRoot, absolutePath
+
