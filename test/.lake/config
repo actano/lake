@@ -1,9 +1,12 @@
 // add your config here.
 // created on Wed Sep 11 2013 17:29:16 GMT+0200 (CEST)
 module.exports = {
-    lakeDir: __dirname,
-    buildDir: "build",
-    localComponents: "build/local_components",
+    lakeDirectory: __dirname,
+    localBuildDirectory: "build",
+    globalBuildDirectory: "build/local_components",
+    runtimeDirectory: "build/runtime",
+    coveragePath: "build/coverage",
+    uninstrumentedPath: "build/coverage/uninstrumented_js_files",
     ruleCollection: [
         "rules.coffee"
     ]
