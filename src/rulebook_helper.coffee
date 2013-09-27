@@ -60,7 +60,13 @@ module.exports.concatPaths = (array, opt, hook) ->
 ###
 module.exports.resolveFeatureRelativePaths = (array, projectRoot, featurePath) ->
     module.exports.concatPaths array, {}, (relativePath) ->
-        absoluteFeaturePath = path.join projectRoot, featurePath
-        absolutePath = path.resolve absoluteFeaturePath, relativePath
-        return path.relative projectRoot, absolutePath
+        absoluteFeaturePath = path.join projectRoot, featurePath        # /Users/john/project/foo/featureA
+        absolutePath = path.resolve absoluteFeaturePath, relativePath   # /Users/john/project/bar/featureB
+        return path.relative projectRoot, absolutePath                  # bar/featureB
 
+module.exports.resolveLocalComponentPaths = (array, projectRoot, featurePath, localComponentPath) ->
+    module.exports.concatPaths array, {}, (relativePath) ->
+        absoluteFeaturePath = path.join projectRoot, featurePath                # /Users/john/project/foo/featureA
+        absolutePath = path.resolve absoluteFeaturePath, relativePath           # /Users/john/project/bar/featureB
+        relativeLocalComponentPath = path.relative projectRoot, absolutePath    # bar/featureB
+        return path.join localComponentPath, relativeLocalComponentPath            # build/local_components/bar/featureB
