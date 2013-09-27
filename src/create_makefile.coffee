@@ -3,7 +3,7 @@
 fs = require 'fs'
 path = require 'path'
 {exec} = require 'child_process'
-
+{inspect} = require 'util'
 mkdirp = require 'mkdirp'
 async = require 'async'
 debug = require('debug')("create-makefile")
@@ -21,14 +21,14 @@ else
 
 {findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'
 
-#TODO: ask regular why there is a second param 'globalTargets'
 mergeObject = (featureTargets, globalTargets) ->
-    _(featureTargets).each (value, key, list) ->
-        if globalTargets[key]?
-            globalTargets[key].push value
-        else
-            globalTargets[key] = value
-    , globalTargets
+    for key, value of featureTargets
+        unless globalTargets[key]?
+            globalTargets[key] = []
+
+        globalTargets[key].push value
+
+    return
 
 
 createMakefiles = (cb) ->
@@ -75,6 +75,7 @@ createMakefiles = (cb) ->
 
                     mergeObject globalFeatureTargets, globalTargets
                     if newApi is true
+                        debug "finished with #{makefileContent}"
                         queueCb null, makefileContent # this is the path for newApi, Makefile.mk already written
                     else
                         makefileMkPath = path.join featurePath, "build", "Makefile.mk"
