@@ -14,8 +14,8 @@ append styles
 append scripts
     script(src="mocha.js")
     script(src="chai.js")
-    script(src="sinon.js")
-    script(src="jquery.js")
+    script(src="sinon-1.7.3.js")
+    script(src="jquery-1.10.2.js")
 
     script(src=name + ".js")
 
@@ -26,8 +26,8 @@ append scripts
         expect = chai.expect;
 
     if tests
-        each t in tests.split(" ")
-            script(src="test/" + t)
+        each testFile in tests.split(" ")
+            script(src=testFile)
 
     script
         if (window.mochaPhantomJS) {

@@ -70,12 +70,12 @@ module.exports =
 
                 assets:
                     styles:
-                      ["build/components/visionmedia-mocha/mocha.css"]
+                      ["__NODE_MODULES__/mocha/mocha.css"]
                     scripts:
-                      ["build/components/visionmedia-mocha/mocha.js",
-                       "build/components/chaijs-chai/lib/chai.js",
-                       "../../vendor/sinon-1.6.0.js",
-                       "../../vendor/jquery-1.9.1.js"
+                      ["__NODE_MODULES__/mocha/mocha.js",
+                       "__NODE_MODULES__/chai/chai.js",
+                       "__PROJECT_ROOT__/vendor/sinon-1.7.3.js",
+                       "__PROJECT_ROOT__/vendor/jquery-1.10.2.js"
                       ]
                 scripts: [
                     "test/testlmake-browser.coffee"

@@ -1,5 +1,5 @@
 path = require 'path'
-{resolveLocalComponentPaths, resolveFeatureRelativePaths, replaceExtension, lookup, concatPaths} = require "../src/rulebook_helper"
+{resolveManifestVariables, resolveLocalComponentPaths, resolveFeatureRelativePaths, replaceExtension, lookup, concatPaths} = require "../src/rulebook_helper"
 
 module.exports =
     title: 'all'
@@ -9,9 +9,9 @@ module.exports =
         # NOTE: these paths are all feature specific !
         buildPath = path.join featurePath, lake.featureBuildDirectory
         componentsPath = path.join buildPath, "components"
-        styluesBuildPath = path.join buildPath, "stylus"
+        styluesBuildPath = path.join buildPath, "styles"
         documentationPath = path.join buildPath, "documentation"
-        projectRoot = path.resolve "..", lake.lakePath
+        projectRoot = path.resolve lake.lakePath, ".."
         localComponentPath = path.join lake.localComponentsPath, featurePath #  for client side targets
         runtimePath = path.join lake.runtimePath, featurePath # directory for server side compile results
         coveragePath = path.join lake.coveragePath, featurePath # for coffee coverage
@@ -75,6 +75,7 @@ module.exports =
                         resolveLocalComponentPaths manifest.client.dependencies.production.local, projectRoot, featurePath, lake.localComponentsPath
                         rb.getRuleById("coffee-client").targets
                         rb.getRuleById("sylus").targets
+                        rule.targets for rule in rb.getRulesByTag("jade-partials", true)
 
                     ]
                     # NOTE: component-build don't use (makefile) dependencies paramter, it parse the component.json
@@ -203,7 +204,7 @@ module.exports =
             "client-test-script-assets":
                 condition: manifest.client?.tests?.browser?.assets?.scripts?
                 tags: ["test-assets"]
-                factoryParams: -> resolveFeatureRelativePaths manifest.client.tests.browser.assets.scripts, projectRoot, featurePath
+                factoryParams: -> resolveManifestVariables manifest.client.tests.browser.assets.scripts, projectRoot
                 factory: (resolvedFiles) ->
                     targets: concatPaths manifest.client.tests.browser.assets.scripts, {}, (file) ->
                         path.join(buildPath, path.basename(file))
@@ -214,7 +215,7 @@ module.exports =
             "client-test-style-assets":
                 condition: manifest.client?.tests?.browser?.assets?.styles?
                 tags: ["test-assets"]
-                factoryParams: -> resolveFeatureRelativePaths manifest.client.tests.browser.assets.styles, projectRoot, featurePath
+                factoryParams: -> resolveManifestVariables manifest.client.tests.browser.assets.styles, projectRoot
                 factory: (resolvedFiles) ->
                     targets: concatPaths manifest.client.tests.browser.assets.styles, {}, (file) ->
                         path.join(buildPath, path.basename(file))
@@ -232,8 +233,8 @@ module.exports =
                         rule.targets for rule in rb.getRulesByTag("test-assets", true)
                     ]
                     actions: [
-                        # manifest.client.tests.browser.html is 'test/test.jade' --remove the directory--> 'test.jade'
-                        "$(BIN)/mocha-phantomjs -R tap #{path.join buildPath, manifest.client.tests.browser.html.split('/')[1]}"
+                        # manifest.client.tests.browser.html is 'test/test.jade' --convert to--> 'test.html'
+                        "$(BIN)/mocha-phantomjs -R tap #{path.join buildPath, replaceExtension manifest.client.tests.browser.html.split('/')[1], '.html'}"
                     ]
 
             "test-all":
@@ -251,7 +252,7 @@ module.exports =
         if manifest.client?.templates?
             for jadeTemplate in manifest.client.templates
                 rules["jade.template.#{jadeTemplate}"] =
-                    tags: ["client"]
+                    tags: ["client", "jade-partials"]
                     factoryParams: jadeTemplate
                     factory: (jadeTemplate) ->
                         targets: path.join buildPath, replaceExtension(jadeTemplate, '.js')

@@ -40,10 +40,10 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
     console.log "#########################"
     #return outerCb new Error "not implemented"
 
-    writeMkFile ruleBook, projectRoot, featurePath, outerCb
+    writeMkFile ruleBook, lakeConfig, featurePath, outerCb
 
-writeMkFile = (ruleBook, projectRoot, featurePath, cb) ->
-
+writeMkFile = (ruleBook, lakeConfig, featurePath, cb) ->
+    projectRoot = lakeConfig.projectRoot
     buffer = ""
     globalTargets = {}
     for id, rule of ruleBook.getRules()
@@ -74,6 +74,10 @@ writeMkFile = (ruleBook, projectRoot, featurePath, cb) ->
 
     mkFilePath = path.join projectRoot, featurePath, MAKEFILE_MK_NAME
     relativeMkPath = path.relative projectRoot, mkFilePath
+    buildDirectory = path.join projectRoot, featurePath, lakeConfig.featureBuildDirectory
+    unless fs.existsSync buildDirectory
+        fs.mkdirSync buildDirectory
+
     fs.writeFile mkFilePath, buffer, (err) ->
         if err?
             console.error "error writing #{mkFilePath}"

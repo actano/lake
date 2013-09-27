@@ -1,5 +1,6 @@
 {_} = require 'underscore'
 path = require 'path'
+fs = require 'fs'
 
 ###
     replace the extension of a file (have to be dot seperated), ignoring the rest of the path (directories)
@@ -58,6 +59,26 @@ module.exports.concatPaths = (array, opt, hook) ->
     lib/foo/featureB and lib/bar/featureC
 
 ###
+
+module.exports.getNodeModulePath = (filePath) ->
+    if filePath is "/"
+        throw new Error "node_modules doesn't exist"
+
+    nodeModulePath = path.join filePath, "node_modules"
+    if fs.existsSync nodeModulePath
+        return nodeModulePath
+    else
+        # go directory up and search there
+        return module.exports.getNodeModulePath path.resolve filePath, ".."
+
+module.exports.resolveManifestVariables = (array, projectRoot) ->
+    module.exports.concatPaths array, {}, (filePath) ->
+        filePath = filePath.replace /__PROJECT_ROOT__/g, projectRoot
+        console.log "pr: #{projectRoot} typeof: #{typeof projectRoot}"
+        nodeModules = module.exports.getNodeModulePath projectRoot
+        filePath = filePath.replace /__NODE_MODULES__/g, nodeModules
+        return filePath
+
 module.exports.resolveFeatureRelativePaths = (array, projectRoot, featurePath) ->
     module.exports.concatPaths array, {}, (relativePath) ->
         absoluteFeaturePath = path.join projectRoot, featurePath        # /Users/john/project/foo/featureA
@@ -69,4 +90,4 @@ module.exports.resolveLocalComponentPaths = (array, projectRoot, featurePath, lo
         absoluteFeaturePath = path.join projectRoot, featurePath                # /Users/john/project/foo/featureA
         absolutePath = path.resolve absoluteFeaturePath, relativePath           # /Users/john/project/bar/featureB
         relativeLocalComponentPath = path.relative projectRoot, absolutePath    # bar/featureB
-        return path.join localComponentPath, relativeLocalComponentPath            # build/local_components/bar/featureB
+        return path.join localComponentPath, relativeLocalComponentPath         # build/local_components/bar/featureB
