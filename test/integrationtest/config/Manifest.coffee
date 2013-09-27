@@ -6,9 +6,6 @@ module.exports =
     license: "MIT"
     description: "configuration file for database, etc."
     keywords: []
-    documentation: []
-    library: false
 
     server:
-        scripts:
-            files: ["index.coffee"]
+        scripts: ["index.coffee"]

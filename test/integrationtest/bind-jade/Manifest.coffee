@@ -6,7 +6,6 @@ module.exports =
     license: "MIT"
     description: "exports a jade'd template file"
     keywords: []
-    library: true
 
     ###
     # Client-side stuff ends up in component.json

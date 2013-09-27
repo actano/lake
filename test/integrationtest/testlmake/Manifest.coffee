@@ -66,7 +66,7 @@ module.exports =
 
             browser:
                 html: "test/test.jade"
-                prerequisits: JADE_TEMPLATES
+                dependencies: JADE_TEMPLATES
 
                 assets:
                     styles:

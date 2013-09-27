@@ -9,19 +9,20 @@ module.exports =
     description: ""
     keywords: []
 
-    library: true
-
     htdocs:
-        page:
-            html: ["views/demo.jade"]
+        demo:
+            html: "views/demo.jade"
             dependencies:
                 templates: JADE_TEMPLATES
             images: []
 
         widget:
-            html: ["views/widget.jade"]
+            html: "views/widget.jade"
             dependencies:
-                templates: ["views/markup", "../../testlmake-dep/views/widget"]
+                templates: [
+                    "views/markup.jade"
+                    "../testlmake-dep/views/widget.jade"
+                ]
             images: []
 
     ###
@@ -52,29 +53,6 @@ module.exports =
         main: "client.coffee"
         styles: ["styles/testlmake-dep.styl"]
         templates: []
-
-        tests:
-            # A single test.html file is created from the specified template.
-            # It contains script tags for
-            # all files mentioned under 'scripts'
-            # This generated HTML file is then loaded into a headless browser
-            # (phantomjs) and the tests are executed with mocha.
-
-            browser:
-                template: "test/test.jade"
-                prerequisits: JADE_TEMPLATES
-
-                scripts: [
-                    "test/testlmake-dep-browser.coffee"
-                ]
-
-            mocha: [
-                "test/testlmake-dep-phantom.coffee"
-            ]
-
-
-
-
 
 
 
