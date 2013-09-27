@@ -31,12 +31,7 @@ class RuleBook
             tagList = @ruleTags[tag] or= [] # init if null
             tagList.push id
 
-        @ruleFactories[id] =
-            factory: wrapper.factory
-            factoryParams: wrapper.factoryParams
-            tags: wrapper.tags
-            init: false
-            processed: false
+        @ruleFactories[id] = _(wrapper).extend {init: false, processed: false}
 
 
     getRuleById: (id) ->
@@ -45,7 +40,8 @@ class RuleBook
     getRulesByTag: (tag, arrayMode) ->
         rulesForTag = @ruleTags[tag]
         unless rulesForTag?
-            throw new Error "no rules for tag: #{tag}\n#{inspect @ruleTags}"
+            debug "no rules for tag: #{tag}\n#{inspect @ruleTags}"
+            return if arrayMode is true then [] else {}
 
         # return as array = [{targets, dependencies, actions}, {targets, dependencies, actions}]
         if arrayMode? and arrayMode is true
@@ -59,6 +55,7 @@ class RuleBook
 
         wrapper = @ruleFactories[id]
         unless wrapper
+            #TODO: discuss if execption should be thrown or not
             throw new Error "no rule defined for id: #{id}"
 
         if wrapper.processed is true
@@ -69,19 +66,35 @@ class RuleBook
             throw new Error "circular dependency found for id: #{id}\nbuild order: #{@factoryOrder.join ' -> '}"
 
         wrapper.init = true
-        tupel = wrapper.factory(wrapper.factoryParams) # targets, dependencies, actions
+        tupel = undefined
+        try
+            factoryParams = null
+            if wrapper.factoryParams?
+                if _(wrapper.factoryParams).isFunction()
+                    factoryParams = wrapper.factoryParams()
+                else
+                    factoryParams = wrapper.factoryParams
 
-        resolvedValues = {}
+            tupel = wrapper.factory(factoryParams) # targets, dependencies, actions
+
+        catch err
+            err.message = "RuleBook factory faild for rule #{id}: #{err.message}"
+            throw err
+
+        resolvedObject = {}
         for key in Object.keys tupel
             if _(tupel[key]).isArray()
-                resolvedValues[key] = _(tupel[key]).flatten()
+                resolvedObject[key] = _(tupel[key]).flatten()
             else
-                resolvedValues[key] = tupel[key]
+                resolvedObject[key] = tupel[key]
 
-            resolvedValues["tags"] = wrapper.tags
+            # add this value to the (targets, dependencies, actions) tupel
+            # when access to getRule()
+            resolvedObject["tags"] = wrapper.tags
+            resolvedObject["global"] = wrapper.global
 
         wrapper.factory = ->
-            resolvedValues
+            resolvedObject
 
         wrapper.processed = true
 
