@@ -25,7 +25,7 @@
     "clean": "rm -rf lib",
     "prepublish": "npm run build",
     "postpublish": "npm run clean",
-    "test": "npm run build; cd test; ../bin/lake integrationtest/testlmake/integration_test"
+    "test": "npm run build; cd test; ../bin/lake features/testlmake/integration_test"
   },
   "readmeFilename": "README.md",
   "dependencies": {
