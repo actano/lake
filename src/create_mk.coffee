@@ -36,14 +36,9 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
     # evaluate the rules, call 'factory()'
     ruleBook.resolveAllFactories()
 
-    #console.log ruleBook.getRules()
-    console.log "#########################"
-    #return outerCb new Error "not implemented"
+    writeMkFile ruleBook, lakeConfig, projectRoot, featurePath, outerCb
 
-    writeMkFile ruleBook, lakeConfig, featurePath, outerCb
-
-writeMkFile = (ruleBook, lakeConfig, featurePath, cb) ->
-    projectRoot = lakeConfig.projectRoot
+writeMkFile = (ruleBook, lakeConfig, projectRoot, featurePath, cb) ->
     buffer = ""
     globalTargets = {}
     for id, rule of ruleBook.getRules()
@@ -70,8 +65,7 @@ writeMkFile = (ruleBook, lakeConfig, featurePath, cb) ->
         #console.log localBuffer
         buffer += localBuffer
 
-    #console.log "globalTargets: #{inspect globalTargets}"
-
+    console.log "#{projectRoot} #{featurePath} #{MAKEFILE_MK_NAME}"
     mkFilePath = path.join projectRoot, featurePath, MAKEFILE_MK_NAME
     relativeMkPath = path.relative projectRoot, mkFilePath
     buildDirectory = path.join projectRoot, featurePath, lakeConfig.featureBuildDirectory
