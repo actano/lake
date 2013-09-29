@@ -120,8 +120,8 @@ module.exports =
                         "mkdir -p #{path.join buildPath, "_design"}"
                         concatPaths manifest.database.designDocuments, {pre: designPath}, (file) ->
                             [
-                                "#$(BIN)/jshint #{file}"
-                                "#$(COUCHVIEW_INSTALL) -s #{file}"
+                                "$(BIN)/jshint #{file}"
+                                "$(COUCHVIEW_INSTALL) -s #{file}"
                                 "touch #{path.join designBuildPath, path.basename file}"
                             ]
                     ]
