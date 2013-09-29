@@ -1,0 +1,18 @@
+extends ../../testlmake-dep/views/page
+include markup
+
+append styles
+    link(rel="stylesheet", type="text/css", href="testlmake.css")
+
+append scripts
+    script(src="testlmake.js")
+    
+    :coffeescript
+        Testlmake = require 'testlmake'
+        testlmake = new Testlmake('.content')
+    
+block body
+    
+    mixin markup
+    
+

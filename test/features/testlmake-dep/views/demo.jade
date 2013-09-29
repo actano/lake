@@ -1,0 +1,18 @@
+extends ../../testlmake-trans-dep/views/page
+include markup
+
+append styles
+    link(rel="stylesheet", type="text/css", href="testlmake-dep.css")
+
+append scripts
+    script(src="testlmake-dep.js")
+    
+    :coffeescript
+        TestlmakeDep = require 'testlmake-dep'
+        testlmakedep = new TestlmakeDep('.content')
+    
+block body
+    
+    mixin markup
+    
+
