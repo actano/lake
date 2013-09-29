@@ -231,6 +231,7 @@ module.exports =
                 factory: ->
                     targets: path.join featurePath, "client_test"
                     dependencies: [
+                        rb.getRuleById("feature").targets
                         rb.getRuleById("test-jade").targets
                         rule.targets for rule in rb.getRulesByTag("test-assets", true)
                     ]
