@@ -89,10 +89,6 @@ module.exports =
             "test/testlmake-unit.coffee"
         ]
 
-    database:
-        designDocuments: []
-        bucket: []
-
     integrationTests:
         mocha: [
             "test/testlmake-integration.coffee"

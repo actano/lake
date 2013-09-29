@@ -11,6 +11,8 @@ module.exports =
         componentsPath = path.join buildPath, "components"
         styluesBuildPath = path.join buildPath, "styles"
         documentationPath = path.join buildPath, "documentation"
+        designPath = path.join featurePath, "_design"
+        designBuildPath = path.join buildPath, "_design"
         projectRoot = path.resolve lake.lakePath, ".."
         localComponentPath = path.join lake.localComponentsPath, featurePath #  for client side targets
         runtimePath = path.join lake.runtimePath, featurePath # directory for server side compile results
@@ -68,7 +70,7 @@ module.exports =
                 condition: manifest.client?.dependencies?.production?.local? and manifest.client?.scripts?
                 tags: ["client"]
                 factory: ->
-                    targets: [path.join(featurePath, manifest.name) + ".js", path.join(featurePath, manifest.name) + ".css"]
+                    targets: [path.join(buildPath, manifest.name) + ".js", path.join(buildPath, manifest.name) + ".css"]
                     dependencies: [
                         rb.getRuleById("component.json").targets
                         # NOTE: path for foreign components is relative, need to resolve it by build the absolute before
@@ -112,15 +114,15 @@ module.exports =
                 condition: manifest.database?.designDocuments?
                 tags: ["feature"]
                 factory: ->
-                    targets: path.join featurePath, "couchview"
-                    dependencies: concatPaths manifest.database.designDocuments, {pre: featurePath}
+                    targets: concatPaths manifest.database.designDocuments, {pre: designBuildPath}
+                    dependencies: concatPaths manifest.database.designDocuments, {pre: designPath}
                     actions: [
                         "mkdir -p #{path.join buildPath, "_design"}"
-                        concatPaths manifest.database.designDocuments, {}, (file) ->
+                        concatPaths manifest.database.designDocuments, {pre: designPath}, (file) ->
                             [
-                                "$(BIN)/jshint #{path.join featurePath, file}"
-                                "$(COUCHVIEW_INSTALL) -s #{path.join featurePath, file}"
-                                "touch #{path.join buildPath, file}"
+                                "#$(BIN)/jshint #{file}"
+                                "#$(COUCHVIEW_INSTALL) -s #{file}"
+                                "touch #{path.join designBuildPath, path.basename file}"
                             ]
                     ]
 
@@ -234,12 +236,12 @@ module.exports =
                     ]
                     actions: [
                         # manifest.client.tests.browser.html is 'test/test.jade' --convert to--> 'test.html'
-                        "$(BIN)/mocha-phantomjs -R tap #{path.join buildPath, replaceExtension manifest.client.tests.browser.html.split('/')[1], '.html'}"
+                        "$(BIN)/mocha-phantomjs -R tap #{path.join buildPath, path.basename(replaceExtension(manifest.client.tests.browser.html, '.html'))}"
                     ]
 
             "test-all":
                 factory: ->
-                    targets: path.join featurePath, "test"
+                    targets: path.join featurePath, "testall"
                     dependencies: rule.targets for rule in rb.getRulesByTag("test", true)
 
             "clean":
@@ -268,7 +270,7 @@ module.exports =
                     tags: ["client"]
                     factoryParams: key
                     factory: (key) ->
-                        targets: path.join buildPath, replaceExtension((lookup manifest, "htdocs.#{key}.html"), '.html')
+                        targets: path.join buildPath, path.basename(replaceExtension((lookup manifest, "htdocs.#{key}.html"), '.html'))
                         # NOTE: path for foreign feature dependencies is relative, need to resolve it by build the absolute before
                         dependencies: [
                             path.join(featurePath, lookup(manifest, "htdocs.#{key}.html"))
