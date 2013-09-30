@@ -1,4 +1,5 @@
 JADE_TEMPLATES = ["views/markup.jade", "../testlmake-dep/views/page.jade"]
+WIDGET_TEMPLATES = ["views/markup.jade", "../testlmake-dep/views/widget.jade"]
 
 module.exports =
 
@@ -21,10 +22,7 @@ module.exports =
         widget:
             html: "views/widget.jade"
             dependencies:
-                templates: [
-                    "views/markup.jade",
-                    "../testlmake-dep/views/widget.jade"
-                ]
+                templates: WIDGET_TEMPLATES
             images: []
 
     ###
