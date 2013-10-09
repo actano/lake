@@ -62,7 +62,7 @@ writeMkFile = (ruleBook, lakeConfig, projectRoot, featurePath, cb) ->
         #console.log localBuffer
         buffer += localBuffer
 
-    console.log "#{projectRoot} #{featurePath} #{MAKEFILE_MK_NAME}"
+    #console.log "#{projectRoot} #{featurePath} #{MAKEFILE_MK_NAME}"
     mkFilePath = path.join projectRoot, featurePath, MAKEFILE_MK_NAME
     relativeMkPath = path.relative projectRoot, mkFilePath
     buildDirectory = path.join projectRoot, featurePath, lakeConfig.featureBuildDirectory

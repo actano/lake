@@ -74,7 +74,6 @@ module.exports.getNodeModulePath = (filePath) ->
 module.exports.resolveManifestVariables = (array, projectRoot) ->
     module.exports.concatPaths array, {}, (filePath) ->
         filePath = filePath.replace /__PROJECT_ROOT__/g, projectRoot
-        console.log "pr: #{projectRoot} typeof: #{typeof projectRoot}"
         nodeModules = module.exports.getNodeModulePath projectRoot
         filePath = filePath.replace /__NODE_MODULES__/g, nodeModules
         return filePath

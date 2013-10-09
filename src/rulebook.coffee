@@ -10,7 +10,7 @@ class RuleBook
         @factoryOrder = [] # [id1, id4, id2, id3] # show if circular dependency is found
 
     getRules: (rulesIds) ->
-        console.dir @ruleFactories
+        #console.dir @ruleFactories
         rulesIds or= (key for key of @ruleFactories)
         debug "getting #{rulesIds}"
         rules = {}
