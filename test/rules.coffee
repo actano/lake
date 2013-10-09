@@ -22,6 +22,18 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
     uninstrumentedPath = path.join lake.uninstrumentedPath, featurePath
 
     if manifest.client?.scripts?
+
+        for script in manifest.client.scripts
+                ((script) ->
+                    scriptPath = path.join buildPath, script
+                    outputScriptDir = path.join buildPath, (path.dirname(script))
+                    rb.addRule "client-#{script}", ["coffee-client", "client"], ->
+                        targets: replaceExtension scriptPath, '.js'
+                        dependencies: path.join featurePath, script
+                        actions: "$(COFFEEC) -c $(COFFEE_FLAGS) -o #{outputScriptDir} $^"
+                )(script)
+
+    if manifest.client?.scriptsssss?
         rb.addRule "coffee-client", ["client"], ->
             targets: concatPaths manifest.client.scripts, {pre: buildPath}, (file) ->
                 replaceExtension file, '.js'
@@ -39,34 +51,36 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
             ]
 
     if manifest.client?
-        rb.addRule "component.json", ["client"], ->
-            targets: path.join buildPath, "component.json"
-            dependencies: path.join featurePath, "Manifest.coffee"
-            actions: [
-                "mkdir -p #{buildPath}"
-                "$(COMPONENT_GENERATOR) $< $@"
-            ]
+        if manifest.client.main?
+            rb.addRule "component.json", ["client"], ->
+                targets: path.join buildPath, "component.json"
+                dependencies: path.join featurePath, "Manifest.coffee"
+                actions: [
+                    "mkdir -p #{buildPath}"
+                    "$(COMPONENT_GENERATOR) $< $@"
+                ]
 
-        rb.addRule "component-install", ["client"], ->
-            targets: componentsPath
-            dependencies: [
-                rb.getRuleById("component.json").targets
-                resolveLocalComponentPaths manifest.client.dependencies.production.local, projectRoot, featurePath, lake.localComponentsPath
-            ]
-            actions: [
-                "cd #{buildPath} && $(COMPONENT_INSTALL) $(COMPONENT_INSTALL_FLAGS) || rm -rf #{componentsPath}"
-                "test -d #{componentsPath}"
-                "touch #{componentsPath}"
-            ]
+        if manifest.client.dependencies?
+            rb.addRule "component-install", ["client"], ->
+                targets: componentsPath
+                dependencies: [
+                    rb.getRuleById("component.json").targets
+                    resolveLocalComponentPaths manifest.client.dependencies.production.local, projectRoot, featurePath, lake.localComponentsPath
+                ]
+                actions: [
+                    "cd #{buildPath} && $(COMPONENT_INSTALL) $(COMPONENT_INSTALL_FLAGS) || rm -rf #{componentsPath}"
+                    "test -d #{componentsPath}"
+                    "touch #{componentsPath}"
+                ]
 
-        if manifest.client?.dependencies?.production?.local? 
+        if manifest.client?.dependencies?.production?.local?
             rb.addRule "component-build", ["client"], ->
                 targets: [path.join(buildPath, manifest.name) + ".js", path.join(buildPath, manifest.name) + ".css"]
                 dependencies: [
                     rb.getRuleById("component.json").targets
                     # NOTE: path for foreign components is relative, need to resolve it by build the absolute before
                     resolveLocalComponentPaths manifest.client.dependencies.production.local, projectRoot, featurePath, lake.localComponentsPath
-                    rb.getRuleById("coffee-client").targets
+                    rule.targets for rule in rb.getRulesByTag("coffee-client", true)
                     rb.getRuleById("stylus").targets
                     rule.targets for rule in rb.getRulesByTag("jade-partials", true)
                 ]
@@ -96,12 +110,12 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                 ]
 
         if manifest.database?.designDocuments?
-            rb.addRule "database", ["feature"], ->
-                targets: concatPaths manifest.database.designDocuments, {pre: designBuildPath}
-                dependencies: concatPaths manifest.database.designDocuments, {pre: designPath}
+            rb.addRule "database", [], ->
+                targets: concatPaths manifest.database.designDocuments, {pre: buildPath}
+                dependencies: concatPaths manifest.database.designDocuments, {pre: featurePath}
                 actions: [
                     "mkdir -p #{path.join buildPath, "_design"}"
-                    concatPaths manifest.database.designDocuments, {pre: designPath}, (file) ->
+                    concatPaths manifest.database.designDocuments, {pre: featurePath}, (file) ->
                         [
                             "$(BIN)/jshint #{file}"
                             "$(COUCHVIEW_INSTALL) -s #{file}"
@@ -171,7 +185,7 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                 actions: concatPaths manifest.client.tests.browser.scripts, {}, (file) ->
                     "$(JADEC) $< -P -o {\\\"name\\\":\\\"#{manifest.name}\\\"\\\,\\\"tests\\\":\\\"#{replaceExtension file, '.js'}\\\"} -O #{buildPath}"
 
-        if manifest.client?.tests?.browser?.assets?.scripts? 
+        if manifest.client?.tests?.browser?.assets?.scripts?
             rb.addRule "client-test-script-assets", ["test-assets"], ->
                 resolvedFiles = resolveManifestVariables manifest.client.tests.browser.assets.scripts, projectRoot
                 return {
@@ -182,7 +196,7 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                         "cp #{file} #{path.join(buildPath, path.basename(file))}"
                 }
 
-        if manifest.client?.tests?.browser?.assets?.styles? 
+        if manifest.client?.tests?.browser?.assets?.styles?
             rb.addRule "client-test-style-assets", ["test-assets"], ->
                 resolvedFiles = resolveManifestVariables manifest.client.tests.browser.assets.styles, projectRoot
                 return {
