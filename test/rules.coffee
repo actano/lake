@@ -49,7 +49,10 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
 
         rb.addRule "component-install", ["client"], ->
             targets: componentsPath
-            dependencies: rb.getRuleById("component.json").targets
+            dependencies: [
+                rb.getRuleById("component.json").targets
+                resolveLocalComponentPaths manifest.client.dependencies.production.local, projectRoot, featurePath, lake.localComponentsPath
+            ]
             actions: [
                 "cd #{buildPath} && $(COMPONENT_INSTALL) $(COMPONENT_INSTALL_FLAGS) || rm -rf #{componentsPath}"
                 "test -d #{componentsPath}"
