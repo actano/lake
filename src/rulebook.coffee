@@ -9,30 +9,42 @@ class RuleBook
         @ruleTags = {} # tag: ["ruleId1", "ruleId2"]
         @factoryOrder = [] # [id1, id4, id2, id3] # show if circular dependency is found
 
-    getRules: (rulesIds = Object.keys(@ruleFactories)) ->
+    getRules: (rulesIds) ->
+        console.dir @ruleFactories
+        rulesIds or= (key for key of @ruleFactories)
+        debug "getting #{rulesIds}"
         rules = {}
-        rules[id] = @ruleFactories[id].factory() for id in rulesIds
+        for id in rulesIds
+            debug id
+            rules[id] = @ruleFactories[id].factory()
         return rules # return the rules = id: {targets, dependenceis, actions}
 
     resolveAllFactories: ->
-        for id, container of @ruleFactories
+        for id of @ruleFactories
             @callRuleFactory id
 
-    add: (id, wrapper) ->
+    addToGlobalTarget: (targetName, rule) ->
+        rule.global = [targetName]
+
+    addRule: (id, tags, factory) ->
+        debug "adding rule #{id}"
         if @ruleFactories[id]?
             throw new Error "rule already exists with id: #{id}"
 
-        if wrapper.condition? and wrapper.condition is false
-            return
+        tags or= []
 
-        wrapper.tags or= []
-
-        for tag in wrapper.tags
+        for tag in tags
             tagList = @ruleTags[tag] or= [] # init if null
             tagList.push id
 
-        @ruleFactories[id] = _(wrapper).extend {init: false, processed: false}
-
+        entry = {
+            tags: tags
+            factory: factory
+            init: false
+            processed: false
+        }
+        @ruleFactories[id] = entry
+        return entry
 
     getRuleById: (id) ->
         return @callRuleFactory id
@@ -66,27 +78,19 @@ class RuleBook
             throw new Error "circular dependency found for id: #{id}\nbuild order: #{@factoryOrder.join ' -> '}"
 
         wrapper.init = true
-        tupel = undefined
+        tuple = undefined
         try
-            factoryParams = null
-            if wrapper.factoryParams?
-                if _(wrapper.factoryParams).isFunction()
-                    factoryParams = wrapper.factoryParams()
-                else
-                    factoryParams = wrapper.factoryParams
-
-            tupel = wrapper.factory(factoryParams) # targets, dependencies, actions
-
+            tuple = wrapper.factory() # targets, dependencies, actions
         catch err
             err.message = "RuleBook factory faild for rule #{id}: #{err.message}"
             throw err
 
         resolvedObject = {}
-        for key in Object.keys tupel
-            if _(tupel[key]).isArray()
-                resolvedObject[key] = _(tupel[key]).flatten()
+        for key of tuple
+            if _(tuple[key]).isArray()
+                resolvedObject[key] = _(tuple[key]).flatten()
             else
-                resolvedObject[key] = tupel[key]
+                resolvedObject[key] = tuple[key]
 
             # add this value to the (targets, dependencies, actions) tupel
             # when access to getRule()
@@ -98,6 +102,6 @@ class RuleBook
 
         wrapper.processed = true
 
-        return wrapper.factory()
+        return resolvedObject
 
 module.exports = RuleBook

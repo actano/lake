@@ -28,10 +28,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
         unless fs.existsSync ruleFilePath
             throw new Error "rule file not found at #{ruleFilePath}"
         rules = require ruleFilePath
-        ruleList = rules.addRules lakeConfig, featurePath, manifest, ruleBook
-
-        # add rules into ruleBook
-        ruleBook.add id, wrapper for id, wrapper of ruleList
+        rules.addRules lakeConfig, featurePath, manifest, ruleBook
 
     # evaluate the rules, call 'factory()'
     ruleBook.resolveAllFactories()

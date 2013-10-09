@@ -9,7 +9,6 @@ debug = require('debug')('lake.manifest-migration')
 {exec, spawn} = require 'child_process'
 {findProjectRoot} = require './file-locator'
 
-
 {replaceExtension} = require './rulebook_helper'
 Glob = require './globber'
 
@@ -89,9 +88,7 @@ migrate = (manifest, outputFile, outerCb) ->
             findProjectRoot cb
 
         (projectRoot, cb) ->
-            console.log "projectRoot: #{projectRoot}"
             lakeConfigPath = path.join projectRoot, ".lake", "config"
-            console.log "lakeConfigPath: #{lakeConfigPath}"
 
             unless (fs.existsSync lakeConfigPath)
                 throw new Error "lake config not found at #{lakeConfigPath}"
@@ -182,6 +179,7 @@ errors = []
 
 if parsed.scan? and parsed.scan is true
 
+    debug "scan is enabled"
     queue = async.queue (manifestFile, cb) ->
         directory = path.dirname manifestFile
         manifest = require path.resolve manifestFile
@@ -190,6 +188,7 @@ if parsed.scan? and parsed.scan is true
 
     globber = new Glob "#{featurePath}/**/#{parsed.name}", parsed.exclude, {cwd: process.cwd()}
     globber.on 'match', (manifestFile) ->
+        debug "found #{manifestFile}"
         directory = path.dirname manifestFile
         queue.push manifestFile, (err) ->
             if err? then errors.push err

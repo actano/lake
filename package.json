@@ -40,7 +40,7 @@
     "nopt": "~2.1.1",
     "once": "~1.1.1",
     "eco": "~1.1.0-rc-3",
-    "js2coffee": "git+https://github.com/rstacruz/js2coffee",
+    "js2coffee": "*",
     "async": "~0.2.9",
     "pipette": "~0.9.3",
     "component": "~0.17.2",
