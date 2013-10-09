@@ -4,7 +4,14 @@ fs = require 'fs'
 js2coffee = require 'js2coffee'
 nopt = require 'nopt'
 {inspect} = require 'util'
+async = require 'async'
 debug = require('debug')('lake.manifest-migration')
+{exec, spawn} = require 'child_process'
+{findProjectRoot} = require './file-locator'
+
+
+{replaceExtension} = require './rulebook_helper'
+Glob = require './globber'
 
 access = (context, key, opt) ->
     if key.indexOf('.') is -1
@@ -41,17 +48,18 @@ factory =
         content = access manifest, from, {mode: "fetch"}
         if content?
             if _(to).isFunction()
-                #console.log "function / factory type found for #{from}"
-                #console.log "content: #{inspect content}"
-                #console.log "to: #{inspect to}"
                 to = to(content)
-                #console.log "to(content): #{to}"
                 return access manifest, to, {mode:"create", content}
             else
                 return access manifest, to, {mode:"create", content}
 
         debug "no content fonud for key '#{from}'"
         return null
+
+    replace: (manifest, obj) ->
+        param = access manifest, obj.key, {mode: "fetch"}
+        content = obj.content param
+        return access manifest, obj.key, {mode: "create", content}
 
     delete: (manifest, key) ->
         return access manifest, key, {mode:"delete"}
@@ -60,7 +68,7 @@ factory =
         return access manifest, obj.key, {mode:"create", content: obj.content}
 
 
-cb = (err) ->
+finish = (err) ->
     if err? and err.length isnt 0
         for e in err
             console.error e
@@ -70,113 +78,83 @@ cb = (err) ->
         console.log "finihsed"
         process.exit 0
 
-foobar = (manifest, outputFile, cb) ->
-    migration = module.exports.migration
+migrate = (manifest, outputFile, outerCb) ->
 
-    manifestOutputStream = fs.createWriteStream outputFile
+    header = undefined
+    manifestJsFile = undefined
 
-    header = migration.header
-    eval header # eval the header variables to provide access to the factory closure
-    manifestOutputStream.write header, 'utf8'
+    async.waterfall [
 
-    for element in migration.actions()
-        for action, value of element
-            keyName = undefined
-            if value.from?
-                keyName = value.from
-            else if value.key?
-                keyName = value.key
-            else
-                keyName = value
+        (cb) ->
+            findProjectRoot cb
 
-            if value.condition?
-                conditionResult = access manifest, value.condition, {mode: "fetch"}
-                debug "condition result: #{conditionResult}"
-                #debug "skipping, because key #{value.condition} doesn't exist"
-                if conditionResult is null
-                    debug "skipping ..."
-                    continue
+        (projectRoot, cb) ->
+            console.log "projectRoot: #{projectRoot}"
+            lakeConfigPath = path.join projectRoot, ".lake", "config"
+            console.log "lakeConfigPath: #{lakeConfigPath}"
 
-            retVal = factory[action](manifest, value)
-            console.log "#{if retVal? then 'ok' else 'failed'} for #{action} -> #{keyName}"
+            unless (fs.existsSync lakeConfigPath)
+                throw new Error "lake config not found at #{lakeConfigPath}"
 
-    # write manifest as javascript to a file, then convert with js2coffee
-    manifestOutputStream.write "module.exports = "
-    manifestAsString = JSON.stringify manifest, null, 4
-    manifestOutputStream.write manifestAsString, 'utf8', cb
+            lakeConfig = require lakeConfigPath
+            migrationFile = lakeConfig.manifestMigrationFile
 
-    #coffeeManifest = js2coffee.build(manifest)
+            unless (migrationFile)
+                throw new Error "lake config has no migration entry '#{manifestMigrationFile}'"
+
+            migrationFile = path.join projectRoot, migrationFile
+            unless (fs.existsSync migrationFile)
+                throw new Error "migration file not found at #{migrationFile}"
+
+            migration = require migrationFile
 
 
-module.exports.migration =
-    header: """JADE_TEMPLATES = ["views/markup.jade", "../testlmake-dep/views/page.jade"]
-            WIDGET_TEMPLATES = ["views/markup.jade", "../testlmake-dep/views/widget.jade"]\n\n
-            """
-    actions: -> [
-        copy:
-            from: "server.scripts.files"
-            to: "server.scripts"
-    ,
-        copy:
-            from: "server.tests.integration"
-            to: "integrationTests.mocha"
-    ,
-        copy:
-            from: "server.tests.unit"
-            to: "server.tests"
-    ,
-        copy:
-            from: "htdocs.page"
-            # the value is obj: {html, ...} html is a array with one element
-            # it must be converted into a string: join('')
-            to: ({html}) -> "htdocs.#{path.basename(html.join(''), path.extname(html.join('')))}"
-    ,
-        create:
-            condition: "htdocs.widget"
-            key: "htdocs.widget.dependencies"
-            content:
-                templates: WIDGET_TEMPLATES
-    ,
-        create:
-            condition: "htdocs.index"
-            key: "htdocs.index.dependencies"
-            content:
-                templates: JADE_TEMPLATES
-    ,
-        create:
-            condition: "htdocs.demo"
-            key: "htdocs.demo.dependencies"
-            content:
-                templates: JADE_TEMPLATES
-    ,
+            header = migration.header
+            eval header # eval the header variables to provide access to the factory closure
 
-        create:
-            key: "client.tests.browser.dependencies"
-            content: JADE_TEMPLATES
-    ,
-        create:
-            key: "client.tests.browser.assets"
-            content:
-                styles:
-                    ["__NODE_MODULES__/mocha/mocha.css"]
-                scripts:
-                    ["__NODE_MODULES__/mocha/mocha.js",
-                     "__NODE_MODULES__/chai/chai.js",
-                     "__PROJECT_ROOT__/vendor/sinon-1.7.3.js",
-                     "__PROJECT_ROOT__/vendor/jquery-1.10.2.js"
-                    ]
-    ,
-        delete: "client.views"
-    ,
-        delete: "htdocs.page"
-    ,
-        delete: "library"
-    ,
-        delete: "client.tests.browser.preequisits"
-    ,
-        delete: "client.tests.mocha"
+            cb null, migration
+
+        (migration, cb) ->
+            manifestJsFile = replaceExtension outputFile, '.js'
+            fs.writeFile manifestJsFile, header, (err) ->
+                cb err, migration
+
+        (migration, cb) ->
+
+            for element in migration.actions()
+                for action, value of element
+                    keyName = undefined
+                    if value.from?
+                        keyName = value.from
+                    else if value.key?
+                        keyName = value.key
+                    else
+                        keyName = value
+
+                    if value.condition?
+                        conditionResult = access manifest, value.condition, {mode: "fetch"}
+                        debug "condition result: #{conditionResult}"
+                        #debug "skipping, because key #{value.condition} doesn't exist"
+                        if conditionResult is null
+                            debug "skipping ..."
+                            continue
+
+                    retVal = factory[action](manifest, value)
+                    console.log "#{if retVal? then 'ok' else 'failed'} for #{action} -> #{keyName}"
+
+            # write manifest as javascript to a file, then convert with js2coffee
+            fs.appendFile manifestJsFile, "module.exports = ", cb
+
+        (cb) ->
+            manifestAsString = JSON.stringify manifest, null, 4
+            fs.appendFile manifestJsFile, manifestAsString, 'utf8', (err) ->
+                cb err, manifestJsFile
+
+        (manifestJsFile, cb) ->
+            exec "js2coffee #{manifestJsFile} > #{outputFile}", (err, stdout) ->
+                outerCb err
+
     ]
-
 
 
 knownOpts = {
@@ -184,6 +162,7 @@ knownOpts = {
     output: String
     scan: Boolean
     help: Boolean
+    exclude: String
 }
 shortHands = {
     "n" : ["--name", "Manifest.coffee"]
@@ -202,18 +181,30 @@ featurePath = parsed.argv.remain[0]
 errors = []
 
 if parsed.scan? and parsed.scan is true
-    #TOOD: use globber
-    globbedFiles = [] # glob the files new Globber featurePath+parsed.name
-    throw new Error "not implemented"
 
-    for manifestFile in globbedFiles
-        directory = path.basename manifestFile
-        manifest = require manifestFile
-        foobar manifest, path.join(directory, parsed.output), (err) ->
+    queue = async.queue (manifestFile, cb) ->
+        directory = path.dirname manifestFile
+        manifest = require path.resolve manifestFile
+        migrate manifest, path.resolve(directory, parsed.output), cb
+    , 1
+
+    globber = new Glob "#{featurePath}/**/#{parsed.name}", parsed.exclude, {cwd: process.cwd()}
+    globber.on 'match', (manifestFile) ->
+        directory = path.dirname manifestFile
+        queue.push manifestFile, (err) ->
             if err? then errors.push err
-    cb errors
+            console.log "# migrated #{directory}"
+
+    globber.on 'end', (err) ->
+        if err? then errors.unshift err
+
+    queue.drain = ->
+        console.log 'migration finished'
+        finish errors
+
+
 else
     manifest = require path.resolve featurePath, parsed.name
-    foobar manifest, path.join(featurePath, parsed.output), (err) ->
-        if err? then errors.push err
-
+    migrate manifest, path.join(featurePath, parsed.output), (err) ->
+        if err?
+            finish [err]
