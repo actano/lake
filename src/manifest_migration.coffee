@@ -7,7 +7,7 @@ nopt = require 'nopt'
 async = require 'async'
 debug = require('debug')('lake.manifest-migration')
 {exec, spawn} = require 'child_process'
-{findProjectRoot} = require './file-locator'
+{findProjectRoot, locateNodeModulesBin} = require './file-locator'
 
 {replaceExtension} = require './rulebook_helper'
 Glob = require './globber'
@@ -74,13 +74,20 @@ finish = (err) ->
         process.exit 1
 
     else
-        console.log "finihsed"
+        console.log "finished"
         process.exit 0
 
-migrate = (manifest, outputFile, outerCb) ->
+migrate = (manifest, outputFile, logKey, outerCb) ->
 
     header = undefined
     manifestJsFile = undefined
+
+    if logKey?
+        content = access manifest, logKey, {mode: "fetch"}
+        console.log "#{manifest.name}:"
+        console.dir content
+        console.log ""
+        return outerCb null
 
     async.waterfall [
 
@@ -148,8 +155,15 @@ migrate = (manifest, outputFile, outerCb) ->
                 cb err, manifestJsFile
 
         (manifestJsFile, cb) ->
-            exec "js2coffee #{manifestJsFile} > #{outputFile}", (err, stdout) ->
-                outerCb err
+            locateNodeModulesBin (err, nodeBin) ->
+                cb err, manifestJsFile, nodeBin
+
+        (manifestJsFile, nodeBin, cb) ->
+            exec "#{path.join nodeBin, 'js2coffee'} #{manifestJsFile} > #{outputFile}", (err) ->
+                cb err, manifestJsFile
+
+        (manifestJsFile) ->
+            fs.unlink manifestJsFile, outerCb
 
     ]
 
@@ -160,6 +174,7 @@ knownOpts = {
     scan: Boolean
     help: Boolean
     exclude: String
+    log: String
 }
 shortHands = {
     "n" : ["--name", "Manifest.coffee"]
@@ -183,7 +198,8 @@ if parsed.scan? and parsed.scan is true
     queue = async.queue (manifestFile, cb) ->
         directory = path.dirname manifestFile
         manifest = require path.resolve manifestFile
-        migrate manifest, path.resolve(directory, parsed.output), cb
+
+        migrate manifest, path.resolve(directory, parsed.output), parsed.log, cb
     , 1
 
     globber = new Glob "#{featurePath}/**/#{parsed.name}", parsed.exclude, {cwd: process.cwd()}
@@ -191,19 +207,24 @@ if parsed.scan? and parsed.scan is true
         debug "found #{manifestFile}"
         directory = path.dirname manifestFile
         queue.push manifestFile, (err) ->
-            if err? then errors.push err
-            console.log "# migrated #{directory}"
+            if err?
+                console.error "error occurs during globbing"
+                errors.push err
+            debug "pushed #{manifestFile}"
 
     globber.on 'end', (err) ->
-        if err? then errors.unshift err
+        if err?
+            console.error "error occurs at the end of globbing"
+            errors.unshift err
+        debug "globber stopped"
 
     queue.drain = ->
-        console.log 'migration finished'
+        debug "draining queue ..."
         finish errors
 
 
 else
     manifest = require path.resolve featurePath, parsed.name
-    migrate manifest, path.join(featurePath, parsed.output), (err) ->
+    migrate manifest, path.join(featurePath, parsed.output), null, (err) ->
         if err?
             finish [err]

@@ -10,9 +10,9 @@
     "create_component_json": "./bin/create_component_json",
     "manifest-migration": "./bin/manifest-migration"
   },
-  "repository" : {
-    "type" : "git",
-    "url" : "http://github.com/regular/lake.git"
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/regular/lake.git"
   },
   "contributors": [
     "Bastian Albers (http://github.com/bastianalbers)",
@@ -40,7 +40,6 @@
     "nopt": "~2.1.1",
     "once": "~1.1.1",
     "eco": "~1.1.0-rc-3",
-    "js2coffee": "*",
     "async": "~0.2.9",
     "pipette": "~0.9.3",
     "component": "~0.17.2",
@@ -51,7 +50,8 @@
     "supertest": "~0.7.1",
     "mocha-phantomjs": "~3.1.2",
     "phantom": "~0.5.2",
-    "phantomjs": "~1.9.2-0"
+    "phantomjs": "~1.9.2-0",
+    "js2coffee": "~0.2.0"
   },
   "devDependencies": {
     "chai": "1.5.x",

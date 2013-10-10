@@ -67,8 +67,8 @@ class RuleBook
 
         wrapper = @ruleFactories[id]
         unless wrapper
-            #TODO: discuss if execption should be thrown or not
-            throw new Error "no rule defined for id: #{id}"
+            debug "no rule defined for id: #{id}"
+            return {}
 
         if wrapper.processed is true
 
@@ -82,7 +82,7 @@ class RuleBook
         try
             tuple = wrapper.factory() # targets, dependencies, actions
         catch err
-            err.message = "RuleBook factory faild for rule #{id}: #{err.message}"
+            err.message = "RuleBook factory failed for rule #{id}: #{err.message}"
             throw err
 
         resolvedObject = {}
