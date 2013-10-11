@@ -61,12 +61,30 @@ Stores private data like generated Makefile.mk files etc. Just like the .git dir
 
 .lake/features
 --------------
-Stores a list of locations of Lakefiles that contribute targets to the generated Makefile.
+Stores a list of locations of Manifest files that contribute targets to the generated Makefile.
 `lake-add` adds a location to the list.
 
-Lakefile
+.lake/config
+--------------
+A JSON file that contains values, that you use in every rule.
+The key **ruleCollection** contains an array with paths to your rules, relative to the *.lake* directory.
+
+
+RuleBook API
+--------------
+**addRule(id, tags, fn)**
+* **id** - string - id of the rule, have to be unique, otherwise an exepction will be thrown
+* **tags** - array - tags for the rule, which can be used as a reference in other rules
+* **fn** - function - should return an object with 3 key value pairs
+    * **targets** - array/string - targets, like the *make* targets
+    * **dependencies** - array/string - dependencies, like the *make* dependencies
+    * **actions** - array/string - actions, like the *make* actions
+
+TODO: continue (getRulyById, getRulesByTag, reference inside the *fn*, circular references, workflow, global targets)
+
+Manifest.coffee
 --------
-Like a manifest, this file lists various source files that make up different aspects of a particular feature.
+This file lists various source files that make up different aspects of a particular feature.
 
 These aspects include:
 * server-side code (coffee)
@@ -77,12 +95,12 @@ These aspects include:
 * client-side dependencies (components)
 * couchbase view code (js)
 
-TODO: Lakefile format
+TODO: Manifest format
 
 local targets
 =============
 To solve the clashing target name problem mentioned above, we use a module's directory as a namespace for its targets.
-In the generated Makefile `lake` prepends target names with the directory of the module they originate from. That is, it uses the relative path from a Lakefile to the .lake directory as a prefix for the targets generated from that Lakefile.
+In the generated Makefile `lake` prepends target names with the directory of the module they originate from. That is, it uses the relative path from a Manifest to the .lake directory as a prefix for the targets generated from that Manifest.
 
 Conversely, `lake` prefixes the name of a target given on the command line with the current working directory relative to the the location of .lake (i.e. project's root).
 
@@ -98,9 +116,9 @@ directory structure
             stuff you can ignore
         lib
             featureA
-                Lakefile
+                Manifest.coffee
             featureB
-                Lakefile
+                Manifest.cooffee
 
 shell session
 
