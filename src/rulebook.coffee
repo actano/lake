@@ -68,7 +68,7 @@ class RuleBook
         wrapper = @ruleFactories[id]
         unless wrapper
             debug "no rule defined for id: #{id}"
-            return {}
+            return {} # TODO: return null!
 
         if wrapper.processed is true
 
