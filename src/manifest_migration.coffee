@@ -55,6 +55,15 @@ factory =
         debug "no content fonud for key '#{from}'"
         return null
 
+    addArray: (manifest, obj) ->
+        from = obj.from
+        to = obj.to
+        sourceContent = access manifest, from, {mode: "fetch"}
+        targetContent = access manifest, to, {mode: "fetch"}
+        content = sourceContent.concat targetContent
+        return access manifest, obj.to, {mode: "create", content}
+
+
     replace: (manifest, obj) ->
         param = access manifest, obj.key, {mode: "fetch"}
         content = obj.content param
@@ -159,7 +168,8 @@ migrate = (manifest, outputFile, logKey, outerCb) ->
                 cb err, manifestJsFile, nodeBin
 
         (manifestJsFile, nodeBin, cb) ->
-            exec "#{path.join nodeBin, 'js2coffee'} #{manifestJsFile} > #{outputFile}", (err) ->
+            #TODO:
+            exec "#{path.join nodeBin, 'js2coffee --sq -i4'} #{manifestJsFile} > #{outputFile}", (err) ->
                 cb err, manifestJsFile
 
         (manifestJsFile) ->
