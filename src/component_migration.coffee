@@ -1,73 +1,86 @@
-manifestGenerator = require "./create_manifest"
-componentGenerator = require "./create_component_json"
+# Std library
 fs = require 'fs'
 path = require 'path'
 {exec} = require 'child_process'
-async = require 'async'
-debug = require('debug')('manifest-generator.i-test')
-difflet = require('difflet')({indent: 4});
-js2c = require "js2coffee"
 {inspect} = require 'util'
-{_} = require "underscore"
-Glob = require "./globber"
 
+# Third party
+async = require 'async'
+debug = require('debug') 'manifest-generator.i-test'
+difflet = require('difflet') indent: 4
+js2c = require 'js2coffee'
+{_} = require 'underscore'
 
-createManifest = (absolutePath, outputDirectory, outputFileName, outerCb) ->
+# Local dep
+Glob = require './globber'
+componentGenerator = require './create_component_json'
+manifestGenerator = require './create_manifest'
+
+createManifest = (absolutePath, outputDirectory, outputFileName, callback) ->
     async.waterfall [
 
-        (cb) ->
+        (callback) ->
             componentFilePath =  absolutePath
             debug "reading component file: #{componentFilePath}"
-            fs.readFile componentFilePath, "utf8", cb
+            fs.readFile componentFilePath, 'utf8', callback
 
-        (componentJsonFileContent, cb) ->
-            debug "generating manifest ..."
-            componentObject = JSON.parse(componentJsonFileContent.toString())
+        (componentJsonFileContent, callback) ->
+            debug 'generating manifest ...'
+            componentObject = JSON.parse componentJsonFileContent.toString()
             componentDirectory = path.dirname absolutePath
-            manifestGenerator componentObject, componentDirectory, (err, manifest) ->
-                if err? then return cb new Error "error when generating manifest file: #{err.message}"
-                debug "done"
-                cb null, manifest, componentObject
+            manifestGenerator componentObject,
+                componentDirectory,
+                (err, manifest) ->
+                    return callback new Error "error when generating " +
+                        "manifest file: #{err.message}" if err?
+                    debug 'done'
+                    callback null, manifest, componentObject
 
-        (manifest, componentObject, cb) ->
-            debug "convert from manifest to component ..."
+        (manifest, componentObject, callback) ->
+            debug 'convert from manifest to component ...'
 
-            manifest = js2c.build(manifest, {pretty_arrays:false, indent:true})
-            #console.log manifest
-            component = componentGenerator manifest, {sourceFilePrefix: "build"}
+            manifest = js2c.build manifest,
+                pretty_arrays:false
+                indent:true
 
-            debug "comparing component.json files (original and converted)"
+            component = componentGenerator manifest,
+                sourceFilePrefix: 'build'
+
+            debug 'comparing component.json files (original and converted)'
 
             success = _(componentObject).isEqual component
-            debug "result was computed"
+            debug 'result was computed'
             if not success
                 diff = difflet.compare componentObject, component
                 console.log diff
-            cb null, success, manifest
+            callback null, success, manifest
 
-        (result, manifest, cb) ->
+        (result, manifest, callback) ->
             outputPath = path.join outputDirectory, outputFileName
             fs.writeFile outputPath, manifest, {encoding:'utf8'}, (err) ->
-                if err? then return cb err
+                return callback err if err?
 
-                cb null, result, outputDirectory
+                callback null, result, outputDirectory
 
-    ], outerCb
+    ], callback
 
 
 componentFile = 'component.json'
-pattern = "*/component.json"
-manifestFileName = "_Manifest.coffee"
-cwd = ".."
+pattern = '*/component.json'
+manifestFileName = '_Manifest.coffee'
+cwd = '..'
 
-globber = new Glob pattern, "build/", {cwd}
+globber = new Glob pattern, 'build/', {cwd}
 globber.on 'match', (filePath) ->
     console.log "converting #{filePath} ..."
     absolutePath = path.resolve cwd, filePath
     directory = path.dirname absolutePath
-    createManifest absolutePath, directory, manifestFileName, (err, result, path) ->
-        console.log "finished witht result: #{result} for path #{path}"
+    createManifest absolutePath,
+        directory,
+        manifestFileName,
+        (err, result, path) ->
+            console.log "finished witht result: #{result} for path #{path}"
 
 globber.on 'end', (err) ->
-    if err? then return cb err
+    return callback err if err?
 

@@ -1,17 +1,21 @@
 #!/usr/bin/env coffee
 
+# Std library
 fs = require 'fs'
 path = require 'path'
-async = require 'async'
 {inspect} = require 'util'
+
+# Third party
+async = require 'async'
 coffee = require 'coffee-script'
-{_} = require 'underscore'
+debug = require('debug') 'create-component.json'
 nopt = require 'nopt'
-debug = require('debug')('create-component.json')
+{_} = require 'underscore'
 
-{findProjectRoot} = require('./file-locator')
+# Local dep
+{findProjectRoot} = require './file-locator'
 
-debug "require done"
+debug 'require done'
 
 EXTENSION_MAPPING =
     '.coffee': '.js'
@@ -19,10 +23,11 @@ EXTENSION_MAPPING =
     '.jade': '.js'
 
 
-
 convertFileType = (filenames) ->
-    if not filenames? then throw new Error "convertFileType expects string or array instead of #{filenames}"
-    if not filenames.length? then return ""
+    unless filenames?
+        throw new Error "convertFileType expects string or array instead " +
+            "of #{filenames}"
+    if not filenames.length? then return ''
 
     convertExtension = (filename) ->
         oldExtension = path.extname filename
@@ -35,50 +40,67 @@ convertFileType = (filenames) ->
     if typeof filenames is 'string'
         return convertExtension filenames
     else
-        for filename in filenames
-            convertExtension filename
+        convertExtension filename for filename in filenames
 
 
-processPaths = (manifest, projectRoot, manifestPath, componentPath, sourceFilePrefix) ->
+processPaths = (manifest,
+    projectRoot,
+    manifestPath,
+    componentPath,
+    sourceFilePrefix) ->
 
     addPrefix = (localpath) ->
         return path.join sourceFilePrefix, localpath
 
-    keyValuePairs = ["scripts", "templates", "styles"].map (key) ->
+    keyValuePairs = ['scripts', 'templates', 'styles'].map (key) ->
         value = _(convertFileType(manifest.client?[key] or [])).map addPrefix
-        [key, value]
+        return [key, value]
 
     processedPaths = _(keyValuePairs).object()
 
     if manifest.client?.dependencies?.production?.local?
-        processedPaths.localFeatures = _(manifest.client.dependencies.production.local).map (localpath) ->
-            return path.basename localpath
 
-        processedPaths.localPaths = _.uniq _(manifest.client.dependencies.production.local).map (localpath) ->
-            absoluteManifestPath = path.dirname path.resolve manifestPath
-            absoluteComponentPath = path.dirname path.resolve componentPath
+        localProdDependencies = manifest
+            .client
+            .dependencies
+            .production
+            .local
+            
+        processedPaths.localFeatures =
+            _(localProdDependencies).map (localpath) ->
+                return path.basename localpath
 
-            debug "Manifest is in #{absoluteManifestPath}"
-            debug "component.json will be in #{absoluteComponentPath}"
+        processedPaths.localPaths =
+            _.uniq _(localProdDependencies).map (localpath) ->
+                absoluteManifestPath = path.dirname path.resolve manifestPath
+                absoluteComponentPath = path.dirname path.resolve componentPath
 
-            absolutePath = path.join absoluteManifestPath, localpath
-            debug "processing path of local dependency at #{absolutePath}"
-            absolutePath = path.dirname absolutePath
+                debug "Manifest is in #{absoluteManifestPath}"
+                debug "component.json will be in #{absoluteComponentPath}"
 
-            relativeToProjectRoot = path.relative projectRoot, absolutePath
-            # in component.json we will be referencing the tree in build/local_components
-            # because it reflects the structure that component build expects.
-            absolutePath = path.join projectRoot, "build", "local_components", relativeToProjectRoot
+                absolutePath = path.join absoluteManifestPath, localpath
+                debug 'processing path of local dependency at #{absolutePath}'
+                absolutePath = path.dirname absolutePath
 
-            #relative to component.json
-            path.relative absoluteComponentPath, absolutePath
+                relativeToProjectRoot = path.relative projectRoot, absolutePath
+                # in component.json we will be referencing the tree in
+                # build/local_components because it reflects the structure that
+                # component build expects.
+                absolutePath = path.join projectRoot,
+                    'build',
+                    'local_components',
+                    relativeToProjectRoot
 
-    processedPaths.main = if manifest.client?.main?.length
-        convertFileType( path.join(sourceFilePrefix, manifest.client.main))
+                #relative to component.json
+                path.relative absoluteComponentPath, absolutePath
+
+        processedPaths.main = if manifest.client?.main?.length
+            convertFileType path.join(sourceFilePrefix, manifest.client.main)
     else
-        ""
+        ''
 
     return processedPaths
+
 
 generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
     debug "creating #{componentPath} from #{manifestPath}"
@@ -92,7 +114,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         component.json
             {
                 scripts: [
-                    "bar/client.js"    
+                    'bar/client.js'
                 ]
             }
         bar/
@@ -106,7 +128,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         component.json
             {
                 scripts: [
-                    "./client.js"    
+                    './client.js'
                 ]
             }
         client.js
@@ -117,13 +139,17 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
 
     manifest = require path.resolve manifestPath
 
-    processedPaths = processPaths manifest, projectRoot, manifestPath, componentPath, sourceFilePrefix
+    processedPaths = processPaths manifest,
+        projectRoot,
+        manifestPath,
+        componentPath,
+        sourceFilePrefix
 
-    component = {
-        name: manifest.name or "GIVE ME A NAME!"
-        description: manifest.description or ""
-        version: manifest.version or "0.0.1"
-        license: manifest.license or "MIT"
+    component =
+        name: manifest.name or 'GIVE ME A NAME!'
+        description: manifest.description or ''
+        version: manifest.version or '0.0.1'
+        license: manifest.license or 'MIT'
         keywords: manifest.keywords or []
         dependencies: manifest.client?.dependencies?.production?.remote or {}
         local: processedPaths.localFeatures or []
@@ -132,31 +158,24 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         scripts: processedPaths.scripts.concat processedPaths.templates or []
         styles: processedPaths.styles
         main: processedPaths.main
-    }
 
     fs.writeFileSync componentPath, JSON.stringify component, null, 4
 
 
 module.exports = generateComponent
 
-debug "started standalone"
-
-usage = """
-    USAGE: #{path.basename process.argv[1]} <path to manifest> <path to component.json>
-"""
-
-debug "processing arguments ..."
-
+debug 'started standalone'
+usage = "USAGE: #{path.basename process.argv[1]} <path to manifest> " +
+    "<path to component.json>"
+debug 'processing arguments ...'
 
 knownOpts =
-    "help" : Boolean
+    help : Boolean
 
-shortHands = {
-    "h": ["--help"]
-}
+shortHands =
+    h: ['--help']
 
-parsedArgs = nopt(knownOpts, shortHands, process.argv, 2)
-
+parsedArgs = nopt knownOpts, shortHands, process.argv, 2
 
 if parsedArgs.help or parsedArgs.argv.remain.length isnt 2
     console.log usage
@@ -167,7 +186,7 @@ findProjectRoot (err, projectRoot) ->
         console.error err.message
         process.exit 1
 
-    debug "started standalone"
+    debug 'started standalone'
     [manifestPath, componentPath] = parsedArgs.argv.remain
     generateComponent projectRoot, manifestPath, componentPath
     
