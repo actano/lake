@@ -52,8 +52,13 @@ createMakefiles = (cb) ->
 
         (binPath, projectRoot, featureList, cb) ->
             lakeConfigPath = path.join projectRoot, ".lake", "config"
-            unless (fs.existsSync lakeConfigPath)
-                throw new Error "lake config not found at #{lakeConfigPath}"
+
+            ###
+            # don't check file existence with extension
+            # it should be flexible coffee or js, ...?
+            ###
+            #unless (fs.existsSync lakeConfigPath)
+            #    throw new Error "lake config not found at #{lakeConfigPath}"
 
             lakeConfig = require lakeConfigPath
             makefileIncPathList = []
@@ -69,7 +74,6 @@ createMakefiles = (cb) ->
                 console.log "Creating Makefile.mk for #{featurePath}"
                 createLocalMakefileInc lakeConfig, projectRoot, cwd, (err, makefileContent, globalFeatureTargets) ->
                     if err
-                        console.error err.message
                         stopQueue = true
                         return queueCb err
 
@@ -116,7 +120,6 @@ createMakefiles = (cb) ->
 
             , (err) ->
                 if err
-                    console.error "worker queue error: #{err.message}"
                     return cb err
 
                 # will be called when queue proceeded last item
@@ -130,9 +133,8 @@ createMakefiles = (cb) ->
         (binPath, projectRoot, makeFileIncPathList, globalTargets, cb) ->
             fs.readFile path.join(projectRoot, 'Makefile.eco'), 'utf-8', (err, template) ->
                 if err?
-                    console.error err
-                    return err
-                cb err, projectRoot, eco.render template,
+                    return cb err
+                cb null, projectRoot, eco.render template,
                     binPath: binPath
                     projectRoot: projectRoot
                     includes: makeFileIncPathList

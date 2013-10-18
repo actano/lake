@@ -7,7 +7,7 @@ class RuleBook
     constructor: ->
         @ruleFactories = {} # id: factory func
         @ruleTags = {} # tag: ["ruleId1", "ruleId2"]
-        @factoryOrder = [] # [id1, id4, id2, id3] # show if circular dependency is found
+        @factoryOrder = [] # show order if circular dependency is found
 
     getRules: (rulesIds) ->
         #console.dir @ruleFactories
@@ -46,8 +46,8 @@ class RuleBook
         @ruleFactories[id] = entry
         return entry
 
-    getRuleById: (id) ->
-        return @callRuleFactory id
+    getRuleById: (id, defaultValue) ->
+        return @callRuleFactory id, defaultValue
 
     getRulesByTag: (tag, arrayMode) ->
         rulesForTag = @ruleTags[tag]
@@ -55,34 +55,38 @@ class RuleBook
             debug "no rules for tag: #{tag}\n#{inspect @ruleTags}"
             return if arrayMode is true then [] else {}
 
-        # return as array = [{targets, dependencies, actions}, {targets, dependencies, actions}]
-        if arrayMode? and arrayMode is true
-            return (@callRuleFactory rule for rule in rulesForTag)
-
         # return as pairs = id:{targets, dependencies, actions}
-        return @getRules rulesForTag
+        if arrayMode? and arrayMode is false
+            return @getRules rulesForTag
 
-    callRuleFactory: (id) ->
+        ###
+         return as array =
+         [{targets, dependencies, actions}, {targets, dependencies, actions}]
+        ###
+        return (@callRuleFactory rule for rule in rulesForTag)
+
+    callRuleFactory: (id, defaultValue) ->
         @factoryOrder.push id
 
         wrapper = @ruleFactories[id]
         unless wrapper
             debug "no rule defined for id: #{id}"
-            return {} # TODO: return null!
+            return defaultValue
 
         if wrapper.processed is true
 
             return wrapper.factory()
 
         if wrapper.init is true
-            throw new Error "circular dependency found for id: #{id}\nbuild order: #{@factoryOrder.join ' -> '}"
+            throw new Error "circular dependency found for id: " +
+                "#{id}\nbuild order: #{@factoryOrder.join ' -> '}"
 
         wrapper.init = true
         tuple = undefined
         try
             tuple = wrapper.factory() # targets, dependencies, actions
         catch err
-            err.message = "RuleBook factory failed for rule #{id}: #{err.message}"
+            err.message = "RuleBook failed for rule #{id}: #{err.message}"
             throw err
 
         resolvedObject = {}

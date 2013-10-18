@@ -6,10 +6,8 @@ debug = require('debug')('lake.create_mk')
 {inspect} = require 'util'
 RuleBook = require './rulebook'
 
-
 MANIFEST_FILE_NAME = "Manifest.coffee"
 MAKEFILE_MK_NAME = path.join "build", "Makefile.mk"
-
 
 createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb) ->
 
@@ -20,18 +18,32 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
         manifest = require absoluteManifestPath
     catch err
         console.error "#{MANIFEST_FILE_NAME} for #{featurePath} cannot be parsed: #{err.message}"
-        throw err
+        return outerCb err
 
     ruleBook = new RuleBook()
     for ruleFile in lakeConfig.ruleCollection
         ruleFilePath = path.join projectRoot, ruleFile
-        unless fs.existsSync ruleFilePath
-            throw new Error "rule file not found at #{ruleFilePath}"
-        rules = require ruleFilePath
-        rules.addRules lakeConfig, featurePath, manifest, ruleBook
+        # filename has no extension -> be flexible coffee or js
+        #unless fs.existsSync ruleFilePath
+        #    return outerCb new Error "rule file not found at #{ruleFilePath}"
+        try
+            rules = require ruleFilePath
+            rules.addRules lakeConfig, featurePath, manifest, ruleBook
+        catch err
+            console.error "stopped on loading rules for feature '#{featurePath}'"
+            [message, firstStackElem] = err.stack.split '\n'
+            console.error firstStackElem
+            return outerCb err
 
     # evaluate the rules, call 'factory()'
-    ruleBook.resolveAllFactories()
+    try
+        ruleBook.resolveAllFactories()
+    catch err
+        console.error "stopped on resolving rules for feature '#{featurePath}'"
+        [message, firstStackElem] = err.stack.split '\n'
+        console.error firstStackElem
+        return outerCb err
+
 
     writeMkFile ruleBook, lakeConfig, projectRoot, featurePath, outerCb
 
@@ -72,7 +84,7 @@ writeMkFile = (ruleBook, lakeConfig, projectRoot, featurePath, cb) ->
     fs.writeFile mkFilePath, buffer, (err) ->
         if err?
             console.error "error writing #{mkFilePath}"
-            throw err
+            return cb err
 
         cb null, relativeMkPath, globalTargets
 
