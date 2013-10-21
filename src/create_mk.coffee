@@ -6,8 +6,7 @@ debug = require('debug')('lake.create_mk')
 {inspect} = require 'util'
 RuleBook = require './rulebook'
 
-MANIFEST_FILE_NAME = "Manifest.coffee"
-MAKEFILE_MK_NAME = path.join "build", "Makefile.mk"
+MANIFEST_FILE_NAME = "Manifest"
 
 createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb) ->
 
@@ -74,19 +73,18 @@ writeMkFile = (ruleBook, lakeConfig, projectRoot, featurePath, cb) ->
         #console.log localBuffer
         buffer += localBuffer
 
-    #console.log "#{projectRoot} #{featurePath} #{MAKEFILE_MK_NAME}"
-    mkFilePath = path.join projectRoot, featurePath, MAKEFILE_MK_NAME
-    relativeMkPath = path.relative projectRoot, mkFilePath
-    buildDirectory = path.join projectRoot, featurePath, lakeConfig.featureBuildDirectory
-    unless fs.existsSync buildDirectory
-        fs.mkdirSync buildDirectory
+    featureName = path.basename featurePath
+    mkFilePath = path.join lakeConfig.lakePath, "build", featureName + ".mk"
+    mkDirectory = path.dirname mkFilePath
+    unless fs.existsSync mkDirectory
+        fs.mkdirSync mkDirectory
 
     fs.writeFile mkFilePath, buffer, (err) ->
         if err?
             console.error "error writing #{mkFilePath}"
             return cb err
 
-        cb null, relativeMkPath, globalTargets
+        cb null, mkFilePath, globalTargets
 
 
 module.exports = createLocalMakefileInc
