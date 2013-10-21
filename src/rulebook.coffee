@@ -24,6 +24,7 @@ class RuleBook
             @callRuleFactory id
 
     addToGlobalTarget: (targetName, rule) ->
+        debug "adding global target: #{targetName}"
         rule.global = [targetName]
 
     addRule: (id, tags, factory) ->
