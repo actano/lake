@@ -1,7 +1,0 @@
-{expect} = require 'chai'
-
-describe '<%- @NAME %>', ->
-
-    it.skip 'TODO: test something', (done) ->
-        expect('this test').to.be.equal('a real test')
-        done()
