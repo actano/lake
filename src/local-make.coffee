@@ -10,7 +10,7 @@ nopt = require 'nopt'
 
 createMakefiles = require('./create_makefile')
 
-{locateNodeModulesBin, findProjectRoot} = require('./file-locator')
+{findProjectRoot} = require('./file-locator')
 debug = require('debug')('local-make')
 
 knownOpts =
@@ -42,22 +42,19 @@ if parsedArgs.preventMakefileRebuild
 [target] = parsedArgs.argv.remain
 target ?= ''
 
-waterFallTasks = []
-
-waterFallTasks = waterFallTasks.concat [
+async.waterfall [
     (cb) ->
         findProjectRoot cb
-    ]
 
-unless parsedArgs.preventMakefileRebuild
-    waterFallTasks.push (projectRoot, cb) ->
+    (projectRoot, cb) ->
+        if parsedArgs.preventMakefileRebuild
+            cb null, projectRoot
+
         debug('createMakefiles')
         createMakefiles (err) ->
             cb err, projectRoot
-            
-waterFallTasks = waterFallTasks.concat [
-    (projectRoot, cb) ->
 
+    (projectRoot, cb) ->
         console.log '------------------------------'
         console.log "project root is #{projectRoot}"
 
@@ -77,15 +74,15 @@ waterFallTasks = waterFallTasks.concat [
         ]
         make = spawn 'make', args
 
-        make.on 'close', (exitCode) ->
-            cb null, exitCode
-
         make.stdout.pipe process.stdout
         make.stderr.pipe process.stderr
-]
 
-async.waterfall waterFallTasks, (err, exitCode) ->
-    console.log '------------------------------'
+        make.on 'close', (exitCode) ->
+            console.log '------------------------------'
+            if exitCode isnt 0
+                cb new Error "make exit code is #{exitCode}"
+            cb null, exitCode
+], (err, exitCode) ->
     if err?
         console.error err.message
         exitCode or= 1
