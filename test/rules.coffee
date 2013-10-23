@@ -117,7 +117,7 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                     "mkdir -p #{path.join buildPath, "_design"}"
                     concatPaths manifest.database.designDocuments, {pre: featurePath}, (file) ->
                         [
-                            "$(BIN)/jshint #{file}"
+                            "$(NODE_BIN)/jshint #{file}"
                             "$(COUCHVIEW_INSTALL) -s #{file}"
                             "touch #{path.join designBuildPath, path.basename file}"
                         ]
@@ -217,7 +217,7 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                 ]
                 actions: [
                     # manifest.client.tests.browser.html is 'test/test.jade' --convert to--> 'test.html'
-                    "$(BIN)/mocha-phantomjs -R tap #{path.join buildPath, path.basename(replaceExtension(manifest.client.tests.browser.html, '.html'))}"
+                    "$(NODE_BIN)/mocha-phantomjs -R tap #{path.join buildPath, path.basename(replaceExtension(manifest.client.tests.browser.html, '.html'))}"
                 ]
 
         rb.addRule "test-all", [], ->
