@@ -14,17 +14,21 @@ createMakefiles = require('./create_makefile')
 debug = require('debug')('local-make')
 
 knownOpts =
-    preventMakefileRebuild : Boolean
-    help : Boolean
-    version : Boolean
+    preventMakefileRebuild: Boolean
+    help: Boolean
+    version: Boolean
+    verbose: Boolean
 
 shortHands = {
     p: ['--preventMakefileRebuild']
     h: ['--help']
     v: ['--version']
+    V: ['--verbose']
 }
 
 parsedArgs = nopt(knownOpts, shortHands, process.argv, 2)
+
+module.exports.verbose = parsedArgs.verbose
 
 if parsedArgs.version
     console.log pkg.version

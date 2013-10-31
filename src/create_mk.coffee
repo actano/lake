@@ -5,6 +5,7 @@ async = require 'async'
 debug = require('debug')('lake.create_mk')
 {inspect} = require 'util'
 RuleBook = require './rulebook'
+cfg = require './local-make'
 
 MANIFEST_FILE_NAME = "Manifest"
 
@@ -31,16 +32,25 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
         catch err
             console.error "stopped on loading rules for feature '#{featurePath}'"
             [message, firstStackElem] = err.stack.split '\n'
-            console.error firstStackElem
+            if cfg.verbose
+                console.error err.stack
+            else
+                console.error firstStackElem
             return outerCb err
 
-    # evaluate the rules, call 'factory()'
+    # close the rule to be on the safe side, regardless if it's closed already
+    ruleBook.close()
+
     try
-        ruleBook.resolveAllFactories()
+        # evaluate the rules, call 'factory()'
+        ruleBook.getRules()
     catch err
         console.error "stopped on resolving rules for feature '#{featurePath}'"
         [message, firstStackElem] = err.stack.split '\n'
-        console.error firstStackElem
+        if cfg.verbose
+            console.error err.stack
+        else
+            console.error firstStackElem
         return outerCb err
 
 
@@ -51,27 +61,31 @@ writeMkFile = (ruleBook, lakeConfig, projectRoot, featurePath, cb) ->
     globalTargets = {}
     for id, rule of ruleBook.getRules()
         localBuffer = ""
-        if rule.global?
-            for globalKey in rule.global
+        if rule.globalTargets?
+            for globalKey in rule.globalTargets
                 unless globalTargets[globalKey]?
                     globalTargets[globalKey] = []
                 globalTargets[globalKey].push rule.targets
 
         rule.dependencies or= []
         # wrap everything into an array and then flatten
+        # so user can use string or (nested) array
         for prop in ["targets", "dependencies", "actions"]
             if rule[prop]?
                 rule[prop] = _([ rule[prop] ]).flatten()
 
-        localBuffer += "# #{id}\n"
-        localBuffer += "#{rule.targets.join ' '}: #{rule.dependencies.join ' '}\n"
-        if rule.actions?
-            localBuffer += "\t#{rule.actions.join '\n\t'}\n\n"
-        else
-            localBuffer += "\n"
+        # print the rule only if a target exists
+        # otherwise user created the rule for RuleBook API features
+        if rule.targets?
+            localBuffer += "# #{id}\n"
+            localBuffer += "#{rule.targets.join ' '}: #{rule.dependencies.join ' '}\n"
+            if rule.actions?
+                localBuffer += "\t#{rule.actions.join '\n\t'}\n\n"
+            else
+                localBuffer += "\n"
 
-        #console.log localBuffer
-        buffer += localBuffer
+            #console.log localBuffer
+            buffer += localBuffer
 
     featureName = path.basename featurePath
     mkFilePath = path.join lakeConfig.lakePath, "build", featureName + ".mk"

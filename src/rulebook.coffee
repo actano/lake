@@ -5,108 +5,122 @@ debug = require('debug')('lake.rulebook')
 class RuleBook
 
     constructor: ->
-        @ruleFactories = {} # id: factory func
-        @ruleTags = {} # tag: ["ruleId1", "ruleId2"]
+        @ruleFactories = {} # key-value pairs: ruleId -> rule
+        @ruleTags = {} # key-value pairs: tagName -> rule
         @factoryOrder = [] # show order if circular dependency is found
+        @closed = false
 
-    getRules: (rulesIds) ->
-        #console.dir @ruleFactories
-        rulesIds or= (key for key of @ruleFactories)
-        debug "getting #{rulesIds}"
-        rules = {}
-        for id in rulesIds
-            debug id
-            rules[id] = @ruleFactories[id].factory()
-        return rules # return the rules = id: {targets, dependenceis, actions}
+    addToGlobalTarget: (targetName, factory) ->
+        debug "adding globalTargets: #{targetName}"
+        factory.globalTargets.push targetName
 
-    resolveAllFactories: ->
-        for id of @ruleFactories
-            @callRuleFactory id
+    # this method actually adds a FACTORY for a rule
+    addRule: (id, tags, factoryFunction) ->
+        if @closed
+            throw new Error 'RuleBook is already closed, ' +
+                'you can\'t add rules anymore'
 
-    addToGlobalTarget: (targetName, rule) ->
-        debug "adding global target: #{targetName}"
-        rule.global = [targetName]
-
-    addRule: (id, tags, factory) ->
-        debug "adding rule #{id}"
+        debug "adding factory #{id}"
         if @ruleFactories[id]?
-            throw new Error "rule already exists with id: #{id}"
+            throw new Error "factory already exists with id: #{id}"
 
         tags or= []
-
+        # add the tags of the factory to the tag database
         for tag in tags
             tagList = @ruleTags[tag] or= [] # init if null
             tagList.push id
 
-        entry = {
+        # init factory, add properties for resolving later
+        factory = {
             tags: tags
-            factory: factory
-            init: false
-            processed: false
+            globalTargets: []
+            _build: factoryFunction
+            _init: false
+            _processed: false
         }
-        @ruleFactories[id] = entry
-        return entry
 
-    getRuleById: (id, defaultValue) ->
-        return @callRuleFactory id, defaultValue
+        @ruleFactories[id] = factory
+        return factory # unresolved factory (factory not called yet)
 
-    getRulesByTag: (tag, arrayMode) ->
+    getRuleById: (id, defaultValue = null) ->
+        return @_getOrResolve id, defaultValue
+
+    getRulesByTag: (tag, arrayMode = true) ->
         rulesForTag = @ruleTags[tag]
         unless rulesForTag?
             debug "no rules for tag: #{tag}\n#{inspect @ruleTags}"
             return if arrayMode is true then [] else {}
 
-        # return as pairs = id:{targets, dependencies, actions}
-        if arrayMode? and arrayMode is false
+        # return as list = [rule1, rule2, ...]
+        if arrayMode is false
             return @getRules rulesForTag
 
-        ###
-         return as array =
-         [{targets, dependencies, actions}, {targets, dependencies, actions}]
-        ###
-        return (@callRuleFactory rule for rule in rulesForTag)
+        # return as pairs = ruleId -> rule
+        return (@_getOrResolve rule for rule in rulesForTag)
 
-    callRuleFactory: (id, defaultValue) ->
-        @factoryOrder.push id
+    close: ->
+        @closed = true
 
-        wrapper = @ruleFactories[id]
-        unless wrapper
-            debug "no rule defined for id: #{id}"
+    getRules: (factoryIds) ->
+        factoryIds or= (key for key of @ruleFactories)
+        debug "getting #{factoryIds}"
+        factories = {}
+        for id in factoryIds
+            debug id
+            factories[id] = @_getOrResolve id
+
+        # return the factories: id -> {targets, dependenceis, actions}
+        return factories
+
+    _getOrResolve: (id, defaultValue) ->
+        factory = @ruleFactories[id]
+        unless factory
+            debug "no factory defined for id: #{id}"
             return defaultValue
 
-        if wrapper.processed is true
+        # factory is already resolved, don't resolve it again
+        if factory._processed is true
+            return factory._build()
 
-            return wrapper.factory()
+        if @closed is false
+            throw new Error "close the RuleBook before using it"
 
-        if wrapper.init is true
-            throw new Error "circular dependency found for id: " +
+        if factory._init is true
+            error = new Error "circular dependency found for id: " +
                 "#{id}\nbuild order: #{@factoryOrder.join ' -> '}"
+            error.code = "CIRCULAR"
+            throw error
 
-        wrapper.init = true
-        tuple = undefined
+        factory._init = true
+        rule = undefined
+
         try
-            tuple = wrapper.factory() # targets, dependencies, actions
+            @factoryOrder.push id
+            rule = factory._build() # {targets, dependencies, actions}
         catch err
-            err.message = "RuleBook failed for rule #{id}: #{err.message}"
-            throw err
-
-        resolvedObject = {}
-        for key of tuple
-            if _(tuple[key]).isArray()
-                resolvedObject[key] = _(tuple[key]).flatten()
+            parentError = new Error("RuleBook failed for factory #{id}")
+            if err.root?
+                parentError.root = err.root
             else
-                resolvedObject[key] = tuple[key]
+                parentError.root = err
+            parentError.next = err
+            throw parentError
 
-            # add this value to the (targets, dependencies, actions) tupel
-            # when access to getRule()
-            resolvedObject["tags"] = wrapper.tags
-            resolvedObject["global"] = wrapper.global
+        for key of rule
+            if _(rule[key]).isArray()
+                # if nested array, make it flat
+                rule[key] = _(rule[key]).flatten()
 
-        wrapper.factory = ->
-            resolvedObject
+        # copy tags and globalTargets
+        # because isn't generated by the factory
+        rule.tags = factory.tags
+        rule.globalTargets = factory.globalTargets
 
-        wrapper.processed = true
+        factory._processed = true
+        factory._init = false
 
-        return resolvedObject
+        factory._build = -> rule
+
+        return rule
 
 module.exports = RuleBook
