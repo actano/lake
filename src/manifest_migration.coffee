@@ -209,7 +209,7 @@ if parsed.scan? and parsed.scan is true
         directory = path.dirname manifestFile
         manifest = require path.resolve manifestFile
 
-        migrate manifest, path.resolve(directory, parsed.output), parsed.log, cb
+        migrate manifest, path.resolve(directory, parsed.name), parsed.log, cb
     , 1
 
     globber = new Glob "#{featurePath}/**/#{parsed.name}", parsed.exclude, {cwd: process.cwd()}
