@@ -1,9 +1,13 @@
+{inspect} = require 'util'
+{expect} = require 'chai'
+fs = require 'fs'
+tmp = require 'tmp'
+tmp.setGracefulCleanup()
+
 rules = require './rules'
 circularRules = require './circular_rules'
 RuleBook = require '../../src/rulebook'
-{inspect} = require 'util'
-
-{expect} = require 'chai'
+{writeToStream} = require '../../src/create_mk'
 
 projectRoot = "/Users/joe/projectX"
 featurePath = "lib/fooBarFeature"
@@ -159,7 +163,7 @@ describe 'rulebook', ->
     it 'use nested arrays of strings which are flatten', (done) ->
 
         rb = new RuleBook()
-        factory = rb.addRule 'rule', [], ->
+        rb.addRule 'rule', [], ->
             targets: [
                 'target-1', [
                     'target-2-a'
@@ -168,7 +172,7 @@ describe 'rulebook', ->
                     'target-3-a'
                     'target-3-b'
                 ]
-                'target-3'
+                'target-4'
             ]
             dependencies: ['dep-a', ['dep-b', ['dep-c']]]
             actions: 'action'
@@ -182,11 +186,96 @@ describe 'rulebook', ->
             'target-2-b'
             'target-3-a'
             'target-3-b'
-            'target-3'
+            'target-4'
             ])
         expect(rule.dependencies).to.be.eql(['dep-a', 'dep-b', 'dep-c'])
         done()
 
-    #TODO: test .mk and Makefile output
-    # -> refactor create_mk to pass a stream instead of a filepath
-    #   -> better abstraction and testable
+    it 'write the .mk file from a rule to a stream', (done) ->
+        rb = new RuleBook()
+        rb.addRule 'rule_foo', [], ->
+            targets: 'target1 target2'
+            dependencies: ['dep1', 'dep2', 'dep3']
+            actions: ['pwd', 'rm -rf /']
+
+        rb.addRule 'rule_bar', [], ->
+            targets: 'target0'
+            dependencies: [rb.getRuleById('rule_foo').targets, 'target3']
+            actions: 'clean'
+
+        rb.close()
+
+        expected = """
+        # rule_foo
+        target1 target2: dep1 dep2 dep3
+        \tpwd
+        \trm -rf /
+
+        # rule_bar
+        target0: target1 target2 target3
+        \tclean
+
+
+        """
+
+        # resolve all factories
+        rb.getRules()
+
+        writeToStreamAndTest rb, (actual) ->
+            expect(actual).to.be.equal(expected)
+        , done
+
+    it 'write the .mk and flatten nested arrays', (done) ->
+        rb = new RuleBook()
+        factory = rb.addRule 'rule_foobar', [], ->
+            targets: [
+                'target-1', [
+                    'target-2-a'
+                    'target-2-b'
+                ], [
+                    'target-3-a'
+                    'target-3-b'
+                ]
+                'target-4'
+            ]
+            dependencies: ['dep-a', ['dep-b', ['dep-c']]]
+            actions: 'action'
+
+        rb.close()
+
+        expected = """
+        # rule_foobar
+        target-1 target-2-a target-2-b target-3-a target-3-b target-4: """ +
+        """dep-a dep-b dep-c
+        \taction
+
+
+        """
+
+        writeToStreamAndTest rb, (actual) ->
+            expect(actual).to.be.equal(expected)
+        , done
+
+
+    it.skip 'test global Manifest generation', (done) ->
+        done()
+
+
+writeToStreamAndTest = (rb, expectFactory, done) ->
+    tmp.file (err, file, fd) ->
+        if err?
+            console.err "cannot create tmp.file"
+            throw err
+
+        stream = fs.createWriteStream file
+        stream.on 'error', (err) ->
+            console.error "stream error"
+            throw err
+
+        stream.once 'finish', ->
+            content = fs.readFileSync file, {encoding: 'utf8'}
+            expectFactory content
+            done()
+
+        writeToStream stream, rb, {}
+        stream.end()

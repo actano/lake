@@ -10,7 +10,7 @@ debug = require('debug')("create-makefile")
 eco = require 'eco'
 {_} = require 'underscore'
 
-createLocalMakefileInc = require './create_mk'
+{createLocalMakefileInc} = require './create_mk'
 
 
 {findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'

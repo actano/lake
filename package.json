@@ -26,8 +26,7 @@
     "clean": "rm -rf lib",
     "prepublish": "npm run build",
     "postpublish": "npm run clean",
-    "test": "npm run build; cd test; ../bin/lake features/testlmake/integration_test"
-
+    "test": "./tests.sh"
   },
   "readmeFilename": "README.md",
   "dependencies": {
@@ -58,6 +57,7 @@
     "chai": "1.5.x",
     "mocha": "~1.8.1",
     "difflet": "~0.2.6",
-    "dive": "~0.3.0"
+    "dive": "~0.3.0",
+    "tmp": "0.0.21"
   }
 }

@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-require("../lib/local-make");
+require("../lib/local-make").build();

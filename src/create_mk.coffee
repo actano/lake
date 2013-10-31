@@ -103,5 +103,8 @@ writeToStream = (stream, ruleBook, globalTargets) ->
             else
                 stream.write "\n"
 
-module.exports = createLocalMakefileInc
-
+module.exports = {
+    createLocalMakefileInc
+    createStream
+    writeToStream
+}
