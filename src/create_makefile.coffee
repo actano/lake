@@ -167,7 +167,7 @@ createMakefiles = (cb) ->
                 stream.write lakeConfig.globalRules + '\n'
 
             debug 'write last line to stream'
-            stream.end ''
+            stream.end()
             debug 'written it'
 
         ], cb

@@ -9,7 +9,7 @@ cfg = require './local-make'
 
 MANIFEST_FILE_NAME = "Manifest"
 
-createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb) ->
+createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
 
     featurePath = path.relative projectRoot, absoluteFeaturePath
     # check manifest
@@ -18,14 +18,14 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
         manifest = require absoluteManifestPath
     catch err
         console.error "#{MANIFEST_FILE_NAME} for #{featurePath} cannot be parsed: #{err.message}"
-        return outerCb err
+        return cb err
 
     ruleBook = new RuleBook()
     for ruleFile in lakeConfig.ruleCollection
         ruleFilePath = path.join projectRoot, ruleFile
         # filename has no extension -> be flexible coffee or js
         #unless fs.existsSync ruleFilePath
-        #    return outerCb new Error "rule file not found at #{ruleFilePath}"
+        #    return cb new Error "rule file not found at #{ruleFilePath}"
         try
             rules = require ruleFilePath
             rules.addRules lakeConfig, featurePath, manifest, ruleBook
@@ -36,7 +36,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
                 console.error err.stack
             else
                 console.error firstStackElem
-            return outerCb err
+            return cb err
 
     # close the rule to be on the safe side, regardless if it's closed already
     ruleBook.close()
@@ -51,16 +51,35 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, outerCb)
             console.error err.stack
         else
             console.error firstStackElem
-        return outerCb err
+        return cb err
 
-
-    writeMkFile ruleBook, lakeConfig, projectRoot, featurePath, outerCb
-
-writeMkFile = (ruleBook, lakeConfig, projectRoot, featurePath, cb) ->
-    buffer = ""
     globalTargets = {}
+    stream = createStream globalTargets, lakeConfig, projectRoot, featurePath, cb
+
+    writeToStream stream, ruleBook, globalTargets
+    stream.end()
+
+
+createStream = (globalTargets, lakeConfig, projectRoot, featurePath, cb) ->
+
+    featureName = path.basename featurePath
+    mkFilePath = path.join lakeConfig.lakePath, "build", featureName + ".mk"
+    mkDirectory = path.dirname mkFilePath
+    unless fs.existsSync mkDirectory
+        fs.mkdirSync mkDirectory
+
+    stream = fs.createWriteStream mkFilePath, {encoding: 'utf8'}
+    stream.on 'error', (err) ->
+        console.error "error while stream to #{mkFilePath}"
+        return cb err
+
+    stream.once 'finish', ->
+        debug 'Makefile stream finished'
+        return cb null, mkFilePath, globalTargets
+
+
+writeToStream = (stream, ruleBook, globalTargets) ->
     for id, rule of ruleBook.getRules()
-        localBuffer = ""
         if rule.globalTargets?
             for globalKey in rule.globalTargets
                 unless globalTargets[globalKey]?
@@ -77,29 +96,12 @@ writeMkFile = (ruleBook, lakeConfig, projectRoot, featurePath, cb) ->
         # print the rule only if a target exists
         # otherwise user created the rule for RuleBook API features
         if rule.targets?
-            localBuffer += "# #{id}\n"
-            localBuffer += "#{rule.targets.join ' '}: #{rule.dependencies.join ' '}\n"
+            stream.write "# #{id}\n"
+            stream.write "#{rule.targets.join ' '}: #{rule.dependencies.join ' '}\n"
             if rule.actions?
-                localBuffer += "\t#{rule.actions.join '\n\t'}\n\n"
+                stream.write "\t#{rule.actions.join '\n\t'}\n\n"
             else
-                localBuffer += "\n"
-
-            #console.log localBuffer
-            buffer += localBuffer
-
-    featureName = path.basename featurePath
-    mkFilePath = path.join lakeConfig.lakePath, "build", featureName + ".mk"
-    mkDirectory = path.dirname mkFilePath
-    unless fs.existsSync mkDirectory
-        fs.mkdirSync mkDirectory
-
-    fs.writeFile mkFilePath, buffer, (err) ->
-        if err?
-            console.error "error writing #{mkFilePath}"
-            return cb err
-
-        cb null, mkFilePath, globalTargets
-
+                stream.write "\n"
 
 module.exports = createLocalMakefileInc
 
