@@ -10,13 +10,7 @@ debug = require('debug')("create-makefile")
 eco = require 'eco'
 {_} = require 'underscore'
 
-newApi = true
-createLocalMakefileInc = undefined
-
-if newApi is true
-    createLocalMakefileInc = require './create_mk'
-else
-    createLocalMakefileInc = require './create_local_makefile_inc'
+createLocalMakefileInc = require './create_mk'
 
 
 {findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'
@@ -61,7 +55,7 @@ createMakefiles = (cb) ->
             #    throw new Error "lake config not found at #{lakeConfigPath}"
 
             lakeConfig = require lakeConfigPath
-            makefileIncPathList = []
+            mkFiles = []
             globalTargets = {}
             stopQueue = false
             # queue worker function
@@ -71,28 +65,17 @@ createMakefiles = (cb) ->
                     return queueCb new Error "queue worker was stopped due stop flag"
 
                 cwd = path.join projectRoot, featurePath
-                console.log "Creating Makefile.mk for #{featurePath}"
-                createLocalMakefileInc lakeConfig, projectRoot, cwd, (err, makefileContent, globalFeatureTargets) ->
+                console.log "Creating .mk file for #{featurePath}"
+                createLocalMakefileInc lakeConfig, projectRoot, cwd, (err, mkFile, globalFeatureTargets) ->
                     if err
                         stopQueue = true
                         return queueCb err
 
                     mergeObject globalFeatureTargets, globalTargets
-                    if newApi is true
-                        debug "finished with #{makefileContent}"
-                        queueCb null, makefileContent # this is the path for newApi, Makefile.mk already written
-                    else
-                        makefileMkPath = path.join featurePath, "build", "Makefile.mk"
-                        absolutePath = path.join projectRoot, makefileMkPath
-                        buildDir = path.dirname absolutePath
-                        debug "making sure #{buildDir} exists."
-                        mkdirp buildDir, (err) ->
-                            if err? then return queueCb err
-                            fs.writeFile absolutePath, makefileContent, (err) ->
-                                if err? then return queueCb err
-                                queueCb null, makefileMkPath
 
-
+                    debug "finished with #{mkFile}"
+                    queueCb null, mkFile
+                    
             , 1
 
             async.each featureList, (featurePath, eachCb) ->
@@ -107,10 +90,10 @@ createMakefiles = (cb) ->
                     debug err.message
                     eachCb err
 
-                q.push featurePath, (err, makefileMkPath) ->
+                q.push featurePath, (err, mkFile) ->
                     if not err?
-                        debug "created #{makefileMkPath}"
-                        makefileIncPathList.push makefileMkPath
+                        debug "created #{mkFile}"
+                        mkFiles.push mkFile
                         eachCb()
                     else
                         message = "failed to create Makefile.mk for #{featurePath}: #{err}"
@@ -125,11 +108,11 @@ createMakefiles = (cb) ->
                 # will be called when queue proceeded last item
                 # TODO: why this assignment have to be in this scope, and not a scope more outer
                 q.drain = ->
-                    debug 'Makefile.mk finished for feature all features in .lake'
+                    debug 'Makefile generation finished for feature all features in .lake'
                     debug globalTargets
-                    cb null, lakeConfig, binPath, projectRoot, makefileIncPathList, globalTargets
+                    cb null, lakeConfig, binPath, projectRoot, mkFiles, globalTargets
 
-        (lakeConfig, binPath, projectRoot, makeFileIncPathList, globalTargets, cb) ->
+        (lakeConfig, binPath, projectRoot, mkFiles, globalTargets, cb) ->
             # create temp Makefile.eco
             debug "open write stream for Makefile"
             stream = fs.createWriteStream path.join(projectRoot, 'Makefile'), {encoding: 'utf8'}
@@ -170,7 +153,7 @@ createMakefiles = (cb) ->
 
             # includes (Makefile.mk)
             stream.write '\n'
-            stream.write ("include #{file}" for file in makeFileIncPathList).join '\n'
+            stream.write ("include #{file}" for file in mkFiles).join '\n'
             stream.write '\n\n'
 
             # global targets, added by RuleBook API
