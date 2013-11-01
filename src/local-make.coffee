@@ -7,7 +7,7 @@ async = require 'async'
 nopt = require 'nopt'
 
 pkg = require '../package'
-createMakefiles = require('./create_makefile')
+{createMakefiles} = require('./create_makefile')
 {findProjectRoot} = require('./file-locator')
 debug = require('debug')('local-make')
 

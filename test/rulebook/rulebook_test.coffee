@@ -1,6 +1,7 @@
 {inspect} = require 'util'
 {expect} = require 'chai'
 fs = require 'fs'
+path = require 'path'
 tmp = require 'tmp'
 tmp.setGracefulCleanup()
 
@@ -8,9 +9,13 @@ rules = require './rules'
 circularRules = require './circular_rules'
 RuleBook = require '../../src/rulebook'
 {writeToStream} = require '../../src/create_mk'
+{writeMakefileToStream} = require '../../src/create_makefile'
 
+# fake data
 projectRoot = "/Users/joe/projectX"
 featurePath = "lib/fooBarFeature"
+binPath = path.join projectRoot, 'node_modules/.bin'
+
 manifest =
     client:
         main: "main.coffee"
@@ -213,9 +218,7 @@ describe 'rulebook', ->
 
         # rule_bar
         target0: target1 target2 target3
-        \tclean
-
-
+        \tclean\n\n
         """
 
         # resolve all factories
@@ -247,9 +250,7 @@ describe 'rulebook', ->
         # rule_foobar
         target-1 target-2-a target-2-b target-3-a target-3-b target-4: """ +
         """dep-a dep-b dep-c
-        \taction
-
-
+        \taction\n\n
         """
 
         writeToStreamAndTest rb, (actual) ->
@@ -257,8 +258,68 @@ describe 'rulebook', ->
         , done
 
 
-    it.skip 'test global Manifest generation', (done) ->
-        done()
+    it 'test global Manifest generation', (done) ->
+
+        lakeConfig = 
+            makeAssignments: 
+                TOOLS: '$(ROOT)/tools'
+                COFFEEC: '$(NODE_BIN)/coffee'
+                
+            makeDefaultTarget: 
+                target: 'all'
+                dependencies: 'build'
+
+            globalRules: 'target: dep1 dep2\n\tpwd'
+
+        mkFiles = [
+            'mkFiles/lib/foo.mk'
+            'mkFiles/lib/bar.mk'
+
+        ]
+
+        globalTargets =
+            install: ['lib/foo/install', 'lib/bar/install']
+            clean: ['lib/foo/clean', 'lib/bar/clean']
+
+        expected = """
+        ROOT := #{projectRoot}
+        NODE_BIN := #{binPath}
+
+
+        all: build
+
+        include mkFiles/lib/foo.mk
+        include mkFiles/lib/bar.mk
+
+        install: lib/foo/install lib/bar/install
+        clean: lib/foo/clean lib/bar/clean
+
+        target: dep1 dep2
+        \tpwd\n
+        """
+
+        tmp.file (err, file, fd) ->
+            if err?
+                console.err "cannot create tmp.file"
+                throw err
+
+            stream = fs.createWriteStream file
+            stream.on 'error', (err) ->
+                console.error "stream error"
+                throw err
+
+            stream.once 'finish', ->
+                content = fs.readFileSync file, {encoding: 'utf8'}
+
+                # ignore first 3 lines
+                [first, second, empty, content...]= content.split('\n')
+                content = content.join '\n'
+                
+                expect(content).to.be.equal(expected)
+                done()
+
+            writeMakefileToStream stream, lakeConfig, binPath, projectRoot, mkFiles, globalTargets
+            stream.end()
 
 
 writeToStreamAndTest = (rb, expectFactory, done) ->
