@@ -1,11 +1,15 @@
-async = require 'async'
+# Std library
 fs = require 'fs'
 path = require 'path'
+{spawn} = require('child_process')
+
+# Third party
+async = require 'async'
 {expect} = require 'chai'
 debug = require('debug')('test-helper')
-{spawn} = require('child_process')
 {Sink} = require 'pipette'
 
+# Local dep
 {findProjectRoot, locateNodeModulesBin} = require '../src/file-locator'
 
 fileExists = (filePath, cb) ->
@@ -19,7 +23,7 @@ module.exports.files = (env, done) ->
         "#{env.libPath}/Manifest.coffee"
         "#{env.libPath}/index.coffee"
         "#{env.libPath}/styles/#{env.name}.styl"
-        "#{env.libPath}/views/#{if env.library then 'demo.jade' else 'index.jade'}"
+        "#{env.libPath}/views/demo.jade"
         "#{env.libPath}/views/markup.jade"
         "#{env.libPath}/views/widget.jade"
         "#{env.libPath}/test/#{env.name}-unit.coffee"
@@ -81,7 +85,7 @@ module.exports.lmake = (env, target, outerCb) ->
                 output.push data
 
             debug "lake spawned with args: #{arg} and cwd: #{opt.cwd}"
-            #lmake.stdout.pipe(process.stdout, { end: false });
+            #lmake.stdout.pipe(process.stdout, { end: false })
             lmake.on 'exit', (exitCode) ->
                 if exitCode isnt 0
                     process.stdout.write o for o in output

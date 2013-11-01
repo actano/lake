@@ -1,7 +1,11 @@
+# Std library
 path = require 'path'
 http = require 'http'
+
+# Third party
 express = require 'express'
 
+# Local dep
 config = require '../config'
 
 http_port = config.get "app:port"
@@ -24,9 +28,7 @@ app.get '/testlmake', (req, res) ->
 # for rapid prototyping and testing
 
 if require.main is module
-
     app.get '/', (req, res) -> res.render 'demo'
-
     console.log "stand-alone server running."
     console.log "try http://localhost:#{http_port}/"
     app.listen http_port

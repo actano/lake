@@ -1,19 +1,25 @@
 #!/usr/bin/env coffee
 
+# Std library
 fs = require 'fs'
 path = require 'path'
 {exec} = require 'child_process'
 {inspect} = require 'util'
+
+# Third party
 mkdirp = require 'mkdirp'
 async = require 'async'
-debug = require('debug')("create-makefile")
+debug = require('debug')('create-makefile')
 eco = require 'eco'
 {_} = require 'underscore'
 
+# Local dep
 {createLocalMakefileInc} = require './create_mk'
-
-
-{findProjectRoot, locateNodeModulesBin, getFeatureList} = require './file-locator'
+{
+    findProjectRoot
+    locateNodeModulesBin
+    getFeatureList
+} = require './file-locator'
 
 mergeObject = (featureTargets, globalTargets) ->
     for key, value of featureTargets
@@ -39,13 +45,13 @@ createMakefiles = (cb) ->
                 cb null, binPath, projectRoot
 
         (binPath, projectRoot, cb) ->
-            debug "retreive feature list"
+            debug 'retreive feature list'
             getFeatureList (err, list) ->
                 if err? then return cb err
                 cb null, binPath, projectRoot, list
 
         (binPath, projectRoot, featureList, cb) ->
-            lakeConfigPath = path.join projectRoot, ".lake", "config"
+            lakeConfigPath = path.join projectRoot, '.lake', 'config'
 
             ###
             # don't check file existence with extension
@@ -62,11 +68,13 @@ createMakefiles = (cb) ->
             q = async.queue (featurePath, queueCb) ->
 
                 if stopQueue
-                    return queueCb new Error "queue worker was stopped due stop flag"
+                    return queueCb new Error 'queue worker was stopped due ' +
+                    'stop flag'
 
                 cwd = path.join projectRoot, featurePath
                 console.log "Creating .mk file for #{featurePath}"
-                createLocalMakefileInc lakeConfig, projectRoot, cwd, (err, mkFile, globalFeatureTargets) ->
+                createLocalMakefileInc lakeConfig, projectRoot, cwd,
+                (err, mkFile, globalFeatureTargets) ->
                     if err
                         stopQueue = true
                         return queueCb err
@@ -84,9 +92,11 @@ createMakefiles = (cb) ->
                 try
                     m = require path.join projectRoot, featurePath, 'Manifest'
                     if _(m).isEmpty()
-                        eachCb new Error 'Manifest is empty or has no module.exports'
+                        eachCb new Error 'Manifest is empty or ' +
+                        'has no module.exports'
                 catch err
-                    err.message = "Error in Manifest #{featurePath}: #{err.message}"
+                    err.message = "Error in Manifest #{featurePath}: " +
+                    "#{err.message}"
                     debug err.message
                     eachCb err
 
@@ -96,9 +106,11 @@ createMakefiles = (cb) ->
                         mkFiles.push mkFile
                         eachCb()
                     else
-                        message = "failed to create Makefile.mk for #{featurePath}: #{err}"
+                        message = 'failed to create Makefile.mk for ' +
+                        "#{featurePath}: #{err}"
                         debug message
-                        # we have to make sure that the callback is only called once
+                        # we have to make sure
+                        # that the callback is only called once
                         eachCb new Error message
 
             , (err) ->
@@ -106,30 +118,35 @@ createMakefiles = (cb) ->
                     return cb err
 
                 # will be called when queue proceeded last item
-                # TODO: why this assignment have to be in this scope, and not a scope more outer
+                # TODO: why this assignment have to be in this scope
+                # and not a scope more outer
                 q.drain = ->
-                    debug 'Makefile generation finished for feature all features in .lake'
+                    debug 'Makefile generation finished ' +
+                    'for feature all features in .lake'
                     debug globalTargets
-                    cb null, lakeConfig, binPath, projectRoot, mkFiles, globalTargets
+                    cb null, lakeConfig, binPath, projectRoot, mkFiles,
+                        globalTargets
 
         (lakeConfig, binPath, projectRoot, mkFiles, globalTargets, cb) ->
             # create temp Makefile.eco
-            debug "open write stream for Makefile"
+            debug 'open write stream for Makefile'
             stream = fs.createWriteStream path.join(projectRoot, 'Makefile')
             stream.on 'error', (err) ->
-                console.error "error occurs during streaming global Makefile"
+                console.error 'error occurs during streaming global Makefile'
                 return cb err
 
             stream.once 'finish', ->
                 debug 'Makefile stream finished'
                 return cb null
 
-            writeMakefileToStream stream, lakeConfig, binPath, projectRoot, mkFiles, globalTargets
+            writeMakefileToStream stream, lakeConfig, binPath, projectRoot,
+                mkFiles, globalTargets
             debug 'written it'
 
         ], cb
 
-writeMakefileToStream = (stream, lakeConfig, binPath, projectRoot, mkFiles, globalTargets) ->
+writeMakefileToStream = (stream, lakeConfig, binPath, projectRoot, mkFiles,
+        globalTargets) ->
     stream.write '# this file is generated by lake\n'
     stream.write "# generated at #{new Date()}\n"
     stream.write '\n'
@@ -182,7 +199,7 @@ if require.main is module
             console.error "error: #{err}"
             process.exit 1
         else
-            console.log "created global Makefile"
+            console.log 'created global Makefile'
 
 else
     module.exports = {

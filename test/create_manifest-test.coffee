@@ -1,11 +1,15 @@
-difflet = require('difflet')({indent: 4});
+# Std library
+fs = require 'fs'
+
+# Third party
+difflet = require('difflet')({indent: 4})
 async = require 'async'
 {_} = require "underscore"
 debug = require('debug')('manifest-generator.test')
 {expect} = require "chai"
 coffee = require 'coffee-script'
-fs = require 'fs'
 
+# Local dep
 {findProjectRoot} = require "../src/file-locator"
 manifestGenerator = require "../src/create_manifest"
 componentGenerator = require "../src/create_component_json"
@@ -83,8 +87,10 @@ module.exports =
         designDocuments: []
 """
 
-describe "use a component.json and generate a manifest.coffee, then convert into a component.json", ->
-    it "should be equals (the source component.json and generated component.json)", (done) ->
+describe "use a component.json and generate a manifest.coffee, " +
+        "then convert into a component.json", ->
+    it "should be equals (the source component.json and " +
+            "generated component.json)", (done) ->
         async.waterfall [
 
             (cb) ->
@@ -93,23 +99,21 @@ describe "use a component.json and generate a manifest.coffee, then convert into
                 if fs.existsSync 'tmp_component.json'
                     fs.unlinkSync 'tmp_component.json'
 
-                fs.writeFile "tmp_manifest.coffee", sourceManifest, {'flags': 'r'}, cb
+                fs.writeFile "tmp_manifest.coffee",
+                    sourceManifest, {flags: 'r'}, cb
 
             (cb) ->
                 findProjectRoot cb
 
             (projectRoot, cb) ->
-
-
                 debug "generateing component.json  ..."
-                componentGenerator projectRoot, 'tmp_manifest.coffee', 'tmp_component.json'
-
+                componentGenerator projectRoot,
+                    'tmp_manifest.coffee', 'tmp_component.json'
                 fs.readFile 'tmp_component.json', 'utf8', cb
 
             (generatedComponent, cb) ->
                 debug "parsing component.json ..."
                 generatedComponent = JSON.parse generatedComponent
-
                 cb null, generatedComponent
 
             (component, cb) ->
@@ -117,21 +121,19 @@ describe "use a component.json and generate a manifest.coffee, then convert into
 
                 manifestGenerator component, null, (err, generatedManifest) ->
                     if err? then return cb err
-
                     cb null, sourceManifest, generatedManifest
 
             (sourceManifest, generatedManifest, cb) ->
                 # sourceManifest is a string containing coffee source code
-                # generatedManifest is a string containing javascript source code
+                # generatedManifest is a string
+                # containing javascript source code
 
                 sourceManifest = coffee.eval sourceManifest
                 generatedManifest = eval generatedManifest
 
-
                 success = _(sourceManifest).isEqual generatedManifest
                 if not success
                     diff = difflet.compare sourceManifest, generatedManifest
-
                     console.log diff
 
                 cb null, success
@@ -146,8 +148,6 @@ describe "use a component.json and generate a manifest.coffee, then convert into
                     fs.unlinkSync 'tmp_component.json'
 
             expect(result).to.be.ok
-
-
 
             done()
 

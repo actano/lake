@@ -1,16 +1,21 @@
-app = require '../server'
+# Std library
+fs = require 'fs'
+path = require 'path'
+{spawn} = require 'child_process'
 
+# Third party
 request = require 'supertest'
 {expect} = require 'chai'
 {inspect} = require 'util'
 
-{findProjectRoot, locateNodeModulesBin} =  require '../../../../src/file-locator'
-path = require 'path'
-{spawn} = require 'child_process'
+# Local dep
+app = require '../server'
+{
+    findProjectRoot
+    locateNodeModulesBin
+} =  require '../../../../src/file-locator'
 async = require 'async'
 debug = require('debug')('lake.create_local_make_inc-test')
-fs = require 'fs'
-
 testcases = require '../../../test_helper'
 
 projectRoot = undefined
@@ -22,7 +27,6 @@ env =
     libPrefix: 'features'
     depName: 'testlmake-dep'
     transDepName: 'testlmake-trans-dep'
-
 
 describe 'testlmake feature dependencies', ->
 

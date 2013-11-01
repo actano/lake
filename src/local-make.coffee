@@ -1,18 +1,21 @@
+# Std library
 fs = require 'fs'
-{exec, spawn} = require 'child_process'
 path = require 'path'
+{exec, spawn} = require 'child_process'
 {inspect} = require 'util'
+
+# Third party
 {_} = require 'underscore'
 async = require 'async'
 nopt = require 'nopt'
+debug = require('debug')('local-make')
 
+# Local dep
 pkg = require '../package'
 {createMakefiles} = require('./create_makefile')
 {findProjectRoot} = require('./file-locator')
-debug = require('debug')('local-make')
 
 module.exports.build = ->
-
     knownOpts =
         preventMakefileRebuild: Boolean
         help: Boolean
@@ -41,7 +44,7 @@ module.exports.build = ->
 
 
     if parsedArgs.preventMakefileRebuild
-        console.log "(don't update Makefile.mk)"
+        console.log '(don\'t update Makefile.mk)'
 
     [target] = parsedArgs.argv.remain
     target ?= ''

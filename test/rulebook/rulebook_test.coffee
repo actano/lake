@@ -1,10 +1,14 @@
-{inspect} = require 'util'
-{expect} = require 'chai'
+# Std library
 fs = require 'fs'
 path = require 'path'
+{inspect} = require 'util'
+
+# Third party
+{expect} = require 'chai'
 tmp = require 'tmp'
 tmp.setGracefulCleanup()
 
+# Local dep
 rules = require './rules'
 circularRules = require './circular_rules'
 RuleBook = require '../../src/rulebook'
@@ -12,14 +16,14 @@ RuleBook = require '../../src/rulebook'
 {writeMakefileToStream} = require '../../src/create_makefile'
 
 # fake data
-projectRoot = "/Users/joe/projectX"
-featurePath = "lib/fooBarFeature"
+projectRoot = '/Users/joe/projectX'
+featurePath = 'lib/fooBarFeature'
 binPath = path.join projectRoot, 'node_modules/.bin'
 
 manifest =
     client:
-        main: "main.coffee"
-    license: "MIT"
+        main: 'main.coffee'
+    license: 'MIT'
 
 describe 'rulebook', ->
 
@@ -260,12 +264,12 @@ describe 'rulebook', ->
 
     it 'test global Manifest generation', (done) ->
 
-        lakeConfig = 
-            makeAssignments: 
+        lakeConfig =
+            makeAssignments:
                 TOOLS: '$(ROOT)/tools'
                 COFFEEC: '$(NODE_BIN)/coffee'
                 
-            makeDefaultTarget: 
+            makeDefaultTarget:
                 target: 'all'
                 dependencies: 'build'
 
@@ -300,12 +304,12 @@ describe 'rulebook', ->
 
         tmp.file (err, file, fd) ->
             if err?
-                console.err "cannot create tmp.file"
+                console.err 'cannot create tmp.file'
                 throw err
 
             stream = fs.createWriteStream file
             stream.on 'error', (err) ->
-                console.error "stream error"
+                console.error 'stream error'
                 throw err
 
             stream.once 'finish', ->
@@ -318,19 +322,20 @@ describe 'rulebook', ->
                 expect(content).to.be.equal(expected)
                 done()
 
-            writeMakefileToStream stream, lakeConfig, binPath, projectRoot, mkFiles, globalTargets
+            writeMakefileToStream stream,
+                lakeConfig, binPath, projectRoot, mkFiles, globalTargets
             stream.end()
 
 
 writeToStreamAndTest = (rb, expectFactory, done) ->
     tmp.file (err, file, fd) ->
         if err?
-            console.err "cannot create tmp.file"
+            console.err 'cannot create tmp.file'
             throw err
 
         stream = fs.createWriteStream file
         stream.on 'error', (err) ->
-            console.error "stream error"
+            console.error 'stream error'
             throw err
 
         stream.once 'finish', ->

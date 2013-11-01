@@ -1,13 +1,18 @@
+# Std library
 fs = require 'fs'
 path = require 'path'
+{inspect} = require 'util'
+
+# Third party
 async = require 'async'
 {_} = require 'underscore'
 debug = require('debug')('lake.create_mk')
-{inspect} = require 'util'
+
+# Local dep
 RuleBook = require './rulebook'
 cfg = require './local-make'
 
-MANIFEST_FILE_NAME = "Manifest"
+MANIFEST_FILE_NAME = 'Manifest'
 
 createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
 
@@ -17,7 +22,8 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
     try
         manifest = require absoluteManifestPath
     catch err
-        console.error "#{MANIFEST_FILE_NAME} for #{featurePath} cannot be parsed: #{err.message}"
+        console.error "#{MANIFEST_FILE_NAME} for #{featurePath} " +
+            "cannot be parsed: #{err.message}"
         return cb err
 
     ruleBook = new RuleBook()
@@ -30,7 +36,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
             rules = require ruleFilePath
             rules.addRules lakeConfig, featurePath, manifest, ruleBook
         catch err
-            console.error "stopped on loading rules for feature '#{featurePath}'"
+            console.error "cannot load rule for feature '#{featurePath}'"
             [message, firstStackElem] = err.stack.split '\n'
             if cfg.verbose
                 console.error err.stack
@@ -45,7 +51,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
         # evaluate the rules, call 'factory()'
         ruleBook.getRules()
     catch err
-        console.error "stopped on resolving rules for feature '#{featurePath}'"
+        console.error "cannot load rule for feature '#{featurePath}'"
         [message, firstStackElem] = err.stack.split '\n'
         if cfg.verbose
             console.error err.stack
@@ -54,7 +60,8 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
         return cb err
 
     globalTargets = {}
-    stream = createStream globalTargets, lakeConfig, projectRoot, featurePath, cb
+    stream = createStream globalTargets,
+        lakeConfig, projectRoot, featurePath, cb
 
     writeToStream stream, ruleBook, globalTargets
     stream.end()
@@ -63,7 +70,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
 createStream = (globalTargets, lakeConfig, projectRoot, featurePath, cb) ->
 
     featureName = path.basename featurePath
-    mkFilePath = path.join lakeConfig.lakePath, "build", featureName + ".mk"
+    mkFilePath = path.join lakeConfig.lakePath, 'build', featureName + '.mk'
     mkDirectory = path.dirname mkFilePath
     unless fs.existsSync mkDirectory
         fs.mkdirSync mkDirectory
@@ -89,7 +96,7 @@ writeToStream = (stream, ruleBook, globalTargets) ->
         rule.dependencies or= []
         # wrap everything into an array and then flatten
         # so user can use string or (nested) array
-        for prop in ["targets", "dependencies", "actions"]
+        for prop in ['targets', 'dependencies', 'actions']
             if rule[prop]?
                 rule[prop] = _([ rule[prop] ]).flatten()
 
@@ -97,11 +104,12 @@ writeToStream = (stream, ruleBook, globalTargets) ->
         # otherwise user created the rule for RuleBook API features
         if rule.targets?
             stream.write "# #{id}\n"
-            stream.write "#{rule.targets.join ' '}: #{rule.dependencies.join ' '}\n"
+            stream.write "#{rule.targets.join ' '}: "+
+                "#{rule.dependencies.join ' '}\n"
             if rule.actions?
                 stream.write "\t#{rule.actions.join '\n\t'}\n\n"
             else
-                stream.write "\n"
+                stream.write '\n'
 
 module.exports = {
     createLocalMakefileInc

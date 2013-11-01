@@ -1,16 +1,21 @@
+# Std library
 fs = require 'fs'
 path = require 'path'
+{inspect} = require 'util'
+
+# Third party
 async = require 'async'
 nopt = require 'nopt'
 debug = require('debug')('lake-list')
-{inspect} = require 'util'
+
+# Local dep
 {getFeatureList} = require('./file-locator')
 
 knownOpts =
-    "help" : Boolean
+    help : Boolean
 
 shortHands = {
-    "h": ["--help"]
+    h: ['--help']
 }
 
 parsedArgs = nopt(knownOpts, shortHands, process.argv, 2)

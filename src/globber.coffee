@@ -1,6 +1,9 @@
+# Std library
 {exec, spawn} = require 'child_process'
-carrier = require 'carrier'
 events = require 'events'
+
+# Third party
+carrier = require 'carrier'
 
 # thisis way faster that the npm module 'glob'
 class Glob extends events.EventEmitter
@@ -8,7 +11,7 @@ class Glob extends events.EventEmitter
         bashCommand = "ls #{pattern}"
         if excludePattern?.length
             bashCommand += "|grep -v #{excludePattern}"
-        ls = spawn "bash", ['-c', bashCommand], options
+        ls = spawn 'bash', ['-c', bashCommand], options
         carrier.carry ls.stdout, (line) =>
             this.emit 'match', line
 

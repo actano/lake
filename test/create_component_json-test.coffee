@@ -1,11 +1,15 @@
+# Std library
 fs = require 'fs'
-difflet = require('difflet')({indent: 4});
+
+# Third party
+difflet = require('difflet')({indent: 4})
 async = require 'async'
 js2c = require "js2coffee"
 {_} = require "underscore"
 debug = require('debug')('component-generator.test')
 {expect} = require "chai"
 
+# Local dep
 {findProjectRoot} = require "../src/file-locator"
 manifestGenerator = require "../src/create_manifest"
 componentGenerator = require "../src/create_component_json"
@@ -41,22 +45,21 @@ sourceComponent =
 
 sourceFilePrefix = "build"
 
-
-describe "use a component.json and generate a manifest.coffee, then convert into a component.json", ->
-    it "should be equals (the source component.json and generated component.json)", (done) ->
+describe "use a component.json and generate a manifest.coffee, " +
+        "then convert into a component.json", ->
+    it "should be equals (the source component.json and " +
+            "generated component.json)", (done) ->
         async.waterfall [
             (cb) ->
                 debug "generating manifest ..."
                 manifestGenerator sourceComponent, null, (err, manifest) ->
                     if err? then return cb err
-
                     cb null, sourceComponent, manifest
 
             (componentObject, manifest, cb) ->
                 debug "generateing component ..."
                 manifest = js2c.build manifest
-
-                fs.writeFile "tmp_manifest.coffee", manifest, {'flags': 'r'}, cb
+                fs.writeFile "tmp_manifest.coffee", manifest, {flags: 'r'}, cb
 
             (cb) ->
                 findProjectRoot cb
@@ -67,7 +70,8 @@ describe "use a component.json and generate a manifest.coffee, then convert into
                 if fs.existsSync 'build'
                     fs.rmdirSync 'build'
                 fs.mkdirSync 'build'
-                componentGenerator projectRoot, 'tmp_manifest.coffee', 'build/tmp_component.json'
+                componentGenerator projectRoot,
+                    'tmp_manifest.coffee', 'build/tmp_component.json'
 
                 fs.readFile 'build/tmp_component.json', 'utf8', cb
 

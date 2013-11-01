@@ -1,9 +1,11 @@
+# Std library
 fs = require 'fs'
 path = require 'path'
 {exec} = require 'child_process'
+
+# Third party
 carrier = require 'carrier'
 {_} = require 'underscore'
-
 async = require 'async'
 debug = require('debug')('file-locator')
 
@@ -13,9 +15,9 @@ DOT_LAKE_FILENAME = '.lake'
 
 npm_bin = (cb) ->
     if nodeModulesBin?
-        debug "reuse npm_bin path"
+        debug 'reuse npm_bin path'
         cb null, nodeModulesBin
-    debug "spawn 'npm bin' to locate .bin path"
+    debug 'spawn "npm bin" to locate .bin path'
     exec 'npm bin', (err, stdout, stderr) ->
         cb err, stdout
 
@@ -24,7 +26,7 @@ exports.getFeatureList = (cb) ->
         exports.findProjectRoot
 
         (projectRoot, cb) ->
-            featuresPath = path.join projectRoot, ".lake/features"
+            featuresPath = path.join projectRoot, '.lake/features'
             readStream = fs.createReadStream featuresPath
             lines = []
             myCarrier = carrier.carry readStream
@@ -62,7 +64,7 @@ exports.findProjectRoot = (cb) ->
         fs.exists filePath, (exists) ->
             found = exists
             if not found
-                l = currPath.split path.sep                
+                l = currPath.split path.sep
                 if l.length > 2
                     l.pop()
                     currPath = path.sep + path.join.apply null, l
@@ -82,7 +84,7 @@ exports.findProjectRoot = (cb) ->
 
 exports.locateNodeModulesBin = (cb) ->
     if nodeModulesBin?
-        debug "reuse locateNodeBin"
+        debug 'reuse locateNodeBin'
         return cb null, nodeModulesBin
     debug('painstakingly finding node_modules/.bin')
     exports.findProjectRoot (err, projectRoot) ->
@@ -93,10 +95,10 @@ exports.locateNodeModulesBin = (cb) ->
             if exists
                 nodeModulesBin = binPath
                 return cb null, binPath
-            debug "node_modues/.bin is not in project root's directory"
+            debug 'node_modues/.bin is not in project root\'s directory'
 
         npm_bin (err, binPath) ->
-            debug "use npm bin to locate .bin path"
+            debug 'use npm bin to locate .bin path'
             if err? then return cb err
 
             nodeModulesBin = binPath

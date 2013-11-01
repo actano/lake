@@ -5,7 +5,6 @@ TestDep = require 'testlmake-dep'
 text = "Hello World"
 div = dom("<span>#{text}</span>")
 
-
 class Testlmake
     constructor: (parentElement) ->
         parentElement ?= ".content"
@@ -20,7 +19,14 @@ class Testlmake
         list = liTemplate locals
         parent.append list
 
-        modifyList = dom("<div class='testlmake modify'><ul class='content'><li>foo</li></li></ul></div>")
+        modifyList = dom("""
+            <div class='testlmake modify'>
+                <ul class='content'>
+                    <li>foo</li>
+                    </li>
+                </ul>
+            </div>
+        """)
         parent.append modifyList
 
         testdep = new TestDep()

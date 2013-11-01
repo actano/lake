@@ -1,4 +1,7 @@
+# Std library
 {inspect} = require 'util'
+
+# Third party
 debug = require('debug')('lake.rulebook')
 {_} = require 'underscore'
 
@@ -83,12 +86,12 @@ class RuleBook
             return factory._build()
 
         if @closed is false
-            throw new Error "close the RuleBook before using it"
+            throw new Error 'close the RuleBook before using it'
 
         if factory._init is true
-            error = new Error "circular dependency found for id: " +
+            error = new Error 'circular dependency found for id: ' +
                 "#{id}\nbuild order: #{@factoryOrder.join ' -> '}"
-            error.code = "CIRCULAR"
+            error.code = 'CIRCULAR'
             throw error
 
         factory._init = true
@@ -120,7 +123,6 @@ class RuleBook
         factory._init = false
 
         factory._build = -> rule
-
         return rule
 
 module.exports = RuleBook

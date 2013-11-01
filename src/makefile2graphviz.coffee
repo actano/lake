@@ -1,17 +1,18 @@
-carrier = require 'carrier'
+# Std library
 path = require 'path'
 fs = require 'fs'
+{exec} = require 'child_process'
+{inspect} = require 'util'
+
+# Third party
+carrier = require 'carrier'
 async = require 'async'
 nopt = require 'nopt'
 debug = require('debug')('makefile2dot')
-{exec} = require 'child_process'
-{inspect} = require 'util'
 {_} = require 'underscore'
 
 makeDotFile = (inputFile, outputFile, args) ->
-
     inputStream = fs.createReadStream inputFile, {encoding: 'utf8'}
-
     graph =
         foo: []
         currentId: undefined
@@ -22,26 +23,27 @@ makeDotFile = (inputFile, outputFile, args) ->
     inputStream.on 'end', ->
         #console.log graph.foo
 
-        buffer = " digraph Makefile {\n   "
-        #buffer += "   nodesep=0.7\n   "
-        lines = graph.foo.join "\n   "
+        buffer = ' digraph Makefile {\n   '
+        #buffer += '   nodesep=0.7\n   '
+        lines = graph.foo.join '\n   '
         buffer += lines
-        buffer += "\n}"
+        buffer += '\n}'
 
         if args.onlydot
             fs.writeFileSync outputFile, buffer
         else
             unless args.algo?
-                args.algo = "dot"
+                args.algo = 'dot'
             unless args.output?
-                args.output = "pdf"
+                args.output = 'pdf'
 
             dotFile = "#{outputFile}.dot"
             fs.writeFileSync dotFile, buffer
             debug inspect args
             debug inspect args.algo
 
-            command = "dot -K#{args.algo} -T#{args.output} #{dotFile} -o #{outputFile}"
+            command = "dot -K#{args.algo} -T#{args.output} " +
+                "#{dotFile} -o #{outputFile}"
             debug "executing command: #{command}"
             exec command, (err, stdout, stderr) ->
                 fs.unlinkSync dotFile
@@ -49,19 +51,16 @@ makeDotFile = (inputFile, outputFile, args) ->
                 if err?
                     console.log stderr
                     console.log stdout
-                    console.log "is graphvit installed ? [http://www.graphviz.org/Download..php]"
+                    console.log 'is graphvit installed ? ' +
+                        '[http://www.graphviz.org/Download..php]'
                     return process.exit 1
-
 
                 console.log stdout
                 return process.exit 0
 
-
     inputStream.resume()
 
-
     parse = (line) ->
-
         patterns =
             id: /\s*#-\s*(.*)\s*/
             comment: /\s*#.*/
@@ -77,15 +76,19 @@ makeDotFile = (inputFile, outputFile, args) ->
 
             if matchResult?
                 switch key
-                    when 'id' then return processLakeId matchResult[1]
+                    when 'id'
+                        return processLakeId matchResult[1]
                     when 'comment' then return
                     when 'action' then return
-                    when 'assignment' then return processAssigment matchResult[1], matchResult[3]
-                    when 'rule' then return processRule matchResult[1], matchResult[3]
-                    when 'include' then return processInclude matchResult[1]
+                    when 'assignment'
+                        return processAssigment matchResult[1], matchResult[3]
+                    when 'rule'
+                        return processRule matchResult[1], matchResult[3]
+                    when 'include'
+                        return processInclude matchResult[1]
                     else return
 
-        #console.log "------------"
+        #console.log '------------'
 
 
     processInclude = (path) ->
@@ -109,7 +112,8 @@ makeDotFile = (inputFile, outputFile, args) ->
                     debug "#{target} has no dependency"
 
                 if graph.currentId?
-                    graph.foo.push "\"#{target}\" -> \"#{depenency}\" [label=\"#{graph.currentId}\"]"
+                    graph.foo.push "\"#{target}\" -> \"#{depenency}\" " +
+                        "[label=\"#{graph.currentId}\"]"
                 else
                     graph.foo.push "\"#{target}\" -> \"#{depenency}\""
 
@@ -119,26 +123,26 @@ makeDotFile = (inputFile, outputFile, args) ->
 if require.main is module
 
     knownOpts =
-        "help" : Boolean
-        "output": ["pdf", "png", "gif", "jpg", "eps", "svg"]
-        "algo": ["dot", "neato", "twopi", "fdp", "circo"]
-        "onlydot": Boolean
+        help : Boolean
+        output: ['pdf', 'png', 'gif', 'jpg', 'eps', 'svg']
+        algo: ['dot', 'neato', 'twopi', 'fdp', 'circo']
+        onlydot: Boolean
 
     shortHands =
-        "h": ["--help"]
-        "d": ["--algo", "dot"]
-        "t": ["--algo", "twopi"]
-        "c": ["--algo", "circo"]
-        "f": ["--algo", "fdp"]
-        "n": ["--algo", "neato"]
-        "o": ["--onlydot"]
+        h: ['--help']
+        d: ['--algo', 'dot']
+        t: ['--algo', 'twopi']
+        c: ['--algo', 'circo']
+        f: ['--algo', 'fdp']
+        n: ['--algo', 'neato']
+        o: ['--onlydot']
 
     parsedArgs = nopt(knownOpts, shortHands, process.argv, 2)
 
     [inputFile, outputFile] = parsedArgs.argv.remain
 
     if not (inputFile? and outputFile?) or parsedArgs.help?
-        console.log "inputFile outputFile [--?] "
+        console.log 'inputFile outputFile [--?] '
         console.log inspect shortHands
         console.log inspect knownOpts
         return process.exit 0

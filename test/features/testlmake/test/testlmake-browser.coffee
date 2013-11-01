@@ -1,4 +1,3 @@
-
 me = require 'testlmake'
 new me()
 
@@ -22,4 +21,3 @@ describe 'testlmake', ->
         whiteSpace = list.css('white-space')
         expect(whiteSpace).to.be.equal('nowrap')
         done()
-
