@@ -27,7 +27,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
         return cb err
 
     ruleBook = new RuleBook()
-    for ruleFile in lakeConfig.ruleCollection
+    for ruleFile in lakeConfig.rules
         ruleFilePath = path.join projectRoot, ruleFile
         # filename has no extension -> be flexible coffee or js
         #unless fs.existsSync ruleFilePath
@@ -36,7 +36,8 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
             rules = require ruleFilePath
             rules.addRules lakeConfig, featurePath, manifest, ruleBook
         catch err
-            console.error "cannot load rule for feature '#{featurePath}'"
+            console.error "cannot load rulefile #{ruleFile} for " +
+                "feature '#{featurePath}'"
             [message, firstStackElem] = err.stack.split '\n'
             if cfg.verbose
                 console.error err.stack
@@ -51,7 +52,8 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
         # evaluate the rules, call 'factory()'
         ruleBook.getRules()
     catch err
-        console.error "cannot load rule for feature '#{featurePath}'"
+        console.error "cannot load rulefile #{ruleFile} " +
+            "for feature '#{featurePath}'"
         [message, firstStackElem] = err.stack.split '\n'
         if cfg.verbose
             console.error err.stack
