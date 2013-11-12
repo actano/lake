@@ -93,7 +93,7 @@ writeToStream = (stream, ruleBook, globalTargets) ->
             for globalKey in rule.globalTargets
                 unless globalTargets[globalKey]?
                     globalTargets[globalKey] = []
-                globalTargets[globalKey].push rule.targets
+                globalTargets[globalKey].push _([rule.targets]).flatten().join(' ')
 
         rule.dependencies or= []
         # wrap everything into an array and then flatten
