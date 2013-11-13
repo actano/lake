@@ -6,7 +6,7 @@ module.exports =
     coveragePath: "build/coverage"
     uninstrumentedPath: "build/coverage/uninstrumented_js_files"
 
-    ruleCollection: [
+    rules: [
         "rules.coffee"
     ]
 
