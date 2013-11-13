@@ -6,4 +6,5 @@
 # integration test
 npm run build
 cd test
+../bin/lake clean
 ../bin/lake features/testlmake/integration_test
