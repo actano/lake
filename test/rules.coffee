@@ -1,5 +1,7 @@
 path = require 'path'
-{resolveManifestVariables, resolveLocalComponentPaths, resolveFeatureRelativePaths, replaceExtension, lookup, concatPaths} = require "../src/rulebook_helper"
+{resolveManifestVariables, resolveLocalComponentPaths, resolveFeatureRelativePaths, replaceExtension, concatPaths} = require "../src/rulebook_helper"
+
+lookup = require('accessors').get
 
 exports.title = 'all'
 exports.description = """

@@ -108,7 +108,7 @@ class RuleBook
                 parentError.root = err
             parentError.next = err
             throw parentError
-
+        
         for key of rule
             if _(rule[key]).isArray()
                 # if nested array, make it flat
