@@ -9,16 +9,18 @@ fs = require 'fs'
     replace the extension of a file (have to be dot seperated),
     ignoring the rest of the path (directories)
     last parameter needs to be in this format: '.html'
-###
+
 module.exports.replaceExtension = (sourcePath, newExtension) ->
     path.join (path.dirname sourcePath),
         ((path.basename sourcePath, path.extname sourcePath) + newExtension)
 
 ###
+
+###
     path manipulation
     prepend the prefix to the path of each array element and call the hook (cb)
     with the already manipulated path, unless hook is null
-###
+
 module.exports.concatPaths = (array, opt, hook) ->
     opt.pre or= ''
     opt.post or= ''
@@ -29,6 +31,7 @@ module.exports.concatPaths = (array, opt, hook) ->
             buildPathItem =  hook buildPathItem
 
         return buildPathItem
+###
 
 ###
     if a path (in a manifest) is relative to its feautre with a '../'
@@ -53,25 +56,24 @@ module.exports.getNodeModulePath = (filePath) ->
         return module.exports.getNodeModulePath path.resolve filePath, ".."
 
 module.exports.resolveManifestVariables = (array, projectRoot) ->
-    module.exports.concatPaths array, {}, (filePath) ->
+    for filePath in array
         filePath = filePath.replace /__PROJECT_ROOT__/g, projectRoot
         nodeModules = module.exports.getNodeModulePath projectRoot
         filePath = filePath.replace /__NODE_MODULES__/g, nodeModules
-        return filePath
 
 module.exports.resolveFeatureRelativePaths = (array, projectRoot,
         featurePath) ->
-    module.exports.concatPaths array, {}, (relativePath) ->
+    for relativePath in array
         # /Users/john/project/foo/featureA
         absoluteFeaturePath = path.join projectRoot, featurePath
         # /Users/john/project/bar/featureB
         absolutePath = path.resolve absoluteFeaturePath, relativePath
         # bar/featureB
-        return path.relative projectRoot, absolutePath
+        path.relative projectRoot, absolutePath
 
 module.exports.resolveLocalComponentPaths = (array, projectRoot, featurePath,
         localComponentPath) ->
-    module.exports.concatPaths array, {}, (relativePath) ->
+    for relativePath in array
         # /Users/john/project/foo/featureA
         absoluteFeaturePath = path.join projectRoot, featurePath
         # /Users/john/project/bar/featureB
@@ -79,4 +81,4 @@ module.exports.resolveLocalComponentPaths = (array, projectRoot, featurePath,
         # bar/featureB
         relativeLocalComponentPath = path.relative projectRoot, absolutePath
         # build/local_components/bar/featureB
-        return path.join localComponentPath, relativeLocalComponentPath
+        path.join localComponentPath, relativeLocalComponentPath
