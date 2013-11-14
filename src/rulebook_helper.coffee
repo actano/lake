@@ -6,34 +6,6 @@ fs = require 'fs'
 {_} = require 'underscore'
 
 ###
-    replace the extension of a file (have to be dot seperated),
-    ignoring the rest of the path (directories)
-    last parameter needs to be in this format: '.html'
-
-module.exports.replaceExtension = (sourcePath, newExtension) ->
-    path.join (path.dirname sourcePath),
-        ((path.basename sourcePath, path.extname sourcePath) + newExtension)
-
-###
-
-###
-    path manipulation
-    prepend the prefix to the path of each array element and call the hook (cb)
-    with the already manipulated path, unless hook is null
-
-module.exports.concatPaths = (array, opt, hook) ->
-    opt.pre or= ''
-    opt.post or= ''
-
-    _(array).map (item) ->
-        buildPathItem = path.join opt.pre, item, opt.post
-        if hook?
-            buildPathItem =  hook buildPathItem
-
-        return buildPathItem
-###
-
-###
     if a path (in a manifest) is relative to its feautre with a '../'
     it's necessary to resolve the absolute path
     and convert then into a relative path (relative to the project root)

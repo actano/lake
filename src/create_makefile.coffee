@@ -21,6 +21,8 @@ eco = require 'eco'
     getFeatureList
 } = require './file-locator'
 
+Manifest = require './manifest-class'
+
 mergeObject = (featureTargets, globalTargets) ->
     for key, value of featureTargets
         unless globalTargets[key]?
@@ -63,67 +65,54 @@ createMakefiles = (cb) ->
             lakeConfig = require lakeConfigPath
             mkFiles = []
             globalTargets = {}
-            stopQueue = false
+
             # queue worker function
-            q = async.queue (featurePath, queueCb) ->
-
-                if stopQueue
-                    return queueCb new Error 'queue worker was stopped due ' +
-                    'stop flag'
-
+            q = async.queue (featurePath, cb) ->
                 cwd = path.join projectRoot, featurePath
                 console.log "Creating .mk file for #{featurePath}"
                 createLocalMakefileInc lakeConfig, projectRoot, cwd,
                 (err, mkFile, globalFeatureTargets) ->
-                    if err
-                        stopQueue = true
-                        return queueCb err
+                    if err? then return cb err
 
                     mergeObject globalFeatureTargets, globalTargets
 
                     debug "finished with #{mkFile}"
-                    queueCb null, mkFile
+                    cb null, mkFile
                     
-            , 1
+            , 4
 
-            async.each featureList, (featurePath, eachCb) ->
-
-                # manifest syntax check
+            errorMessages = []
+            for featurePath in featureList
                 try
-                    m = require path.join projectRoot, featurePath, 'Manifest'
-                    if _(m).isEmpty()
-                        eachCb new Error 'Manifest is empty or ' +
-                        'has no module.exports'
+                    manifest = new Manifest projectRoot, featurePath
+
                 catch err
                     err.message = "Error in Manifest #{featurePath}: " +
                     "#{err.message}"
                     debug err.message
-                    eachCb err
+                    return cb err
 
                 q.push featurePath, (err, mkFile) ->
                     if not err?
                         debug "created #{mkFile}"
                         mkFiles.push mkFile
-                        eachCb()
                     else
                         message = 'failed to create Makefile.mk for ' +
                         "#{featurePath}: #{err}"
                         debug message
-                        # we have to make sure
-                        # that the callback is only called once
-                        eachCb new Error message
+                        errorMessages.push message
 
-            , (err) ->
-                if err
-                    return cb err
-
-                # will be called when queue proceeded last item
-                # TODO: why this assignment have to be in this scope
-                # and not a scope more outer
-                q.drain = ->
-                    debug 'Makefile generation finished ' +
-                    'for feature all features in .lake'
-                    debug globalTargets
+        
+            # will be called when queue proceeded last item
+            # TODO: why this assignment have to be in this scope
+            # and not a scope more outer
+            q.drain = ->
+                debug 'Makefile generation finished ' +
+                'for feature all features in .lake'
+                debug globalTargets
+                if errorMessages.length
+                    cb new Error "failed to create Makefile" + errorMessages
+                else
                     cb null, lakeConfig, binPath, projectRoot, mkFiles,
                         globalTargets
 
