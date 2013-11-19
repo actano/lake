@@ -100,6 +100,7 @@ class RuleBook
         try
             @factoryOrder.push id
             rule = factory._build() # {targets, dependencies, actions}
+
         catch err
             parentError = new Error("RuleBook failed for factory #{id}: #{err}")
             if err.root?

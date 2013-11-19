@@ -14,17 +14,8 @@ cfg = require './local-make'
 
 MANIFEST_FILE_NAME = 'Manifest'
 
-createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
-
-    featurePath = path.relative projectRoot, absoluteFeaturePath
-    # check manifest
-    absoluteManifestPath = path.join absoluteFeaturePath, MANIFEST_FILE_NAME
-    try
-        manifest = require absoluteManifestPath
-    catch err
-        console.error "#{MANIFEST_FILE_NAME} for #{featurePath} " +
-            "cannot be parsed: #{err.message}"
-        return cb err
+createLocalMakefileInc = (lakeConfig, manifest, cb) ->
+    {projectRoot, featurePath} = manifest
 
     ruleBook = new RuleBook()
     for ruleFile in lakeConfig.rules
@@ -35,6 +26,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
         try
             rules = require ruleFilePath
             rules.addRules lakeConfig, featurePath, manifest, ruleBook
+        
         catch err
             console.error "cannot load rulefile #{ruleFile} for " +
                 "feature '#{featurePath}'"
@@ -44,6 +36,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
             else
                 console.error firstStackElem
             return cb err
+        
 
     # close the rule to be on the safe side, regardless if it's closed already
     ruleBook.close()
@@ -52,6 +45,7 @@ createLocalMakefileInc = (lakeConfig, projectRoot, absoluteFeaturePath, cb) ->
         # evaluate the rules, call 'factory()'
         ruleBook.getRules()
     catch err
+    
         console.error "cannot load rulefile #{ruleFile} " +
             "for feature '#{featurePath}'"
         [message, firstStackElem] = err.stack.split '\n'

@@ -1,8 +1,6 @@
 {join, basename, dirname, resolve} = require 'path'
 debug = require('debug')('rules.coffee')
-{resolveManifestVariables, resolveLocalComponentPaths, resolveFeatureRelativePaths} = require "../src/rulebook_helper"
-
-lookup = require('accessors').get
+{resolveLocalComponentPaths} = require "../src/rulebook_helper"
 
 exports.title = 'all'
 exports.description = """
@@ -171,28 +169,30 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                 dependencies: [
                     join featurePath, manifest.client.tests.browser.html
                     rb.getRuleById("browser-test-scripts").targets
-                    resolveFeatureRelativePaths manifest.client.tests.browser.dependencies, projectRoot, featurePath
+                    manifest.lookupPath 'client.tests.browser.dependencies'
                 ]
                 actions: for script in manifest.client.tests.browser.scripts
                     "$(JADEC) $< -P -o {\\\"name\\\":\\\"#{manifest.name}\\\"\\\,\\\"tests\\\":\\\"#{script.replace(/\..*$/, '.js')}\\\"} -O #{buildPath}"
 
         if manifest.client?.tests?.browser?.assets?.scripts?
             rb.addRule "client-test-script-assets", ["test-assets"], ->
-                resolvedFiles = resolveManifestVariables manifest.client.tests.browser.assets.scripts, projectRoot
+                scripts = manifest.lookupPath 'client.tests.browser.assets.scripts'
                 return {
-                    targets: join(buildPath, basename script) for script in manifest.client.tests.browser.assets.scripts
-                    dependencies: resolvedFiles
-                    actions: for file in resolvedFiles
+                    targets: join(buildPath, basename script) for script in scripts
+                    dependencies: scripts
+                    actions: for file in scripts
                         "cp #{file} #{join(buildPath, basename(file))}"
                 }
 
         if manifest.client?.tests?.browser?.assets?.styles?
             rb.addRule "client-test-style-assets", ["test-assets"], ->
-                resolvedFiles = resolveManifestVariables manifest.client.tests.browser.assets.styles, projectRoot
+                styles = manifest.lookupPath 'client.tests.browser.assets.styles'
                 return {
-                    targets: join(buildPath, basename(file)) for file in manifest.client.tests.browser.assets.styles
-                    dependencies: resolvedFiles
-                    actions: for file in resolvedFiles
+                    # FIXME: the use of basename cuts of any path in the manifest
+                    # (this problem occures not only here)
+                    targets: join(buildPath, basename(file)) for file in styles
+                    dependencies: manifest.lookupPath 'client.tests.browser.assets.styles'
+                    actions: for file in styles
                         "cp #{file} #{join(buildPath, basename(file))}"
                 }
 
@@ -234,11 +234,11 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
         for key, value of manifest.htdocs
             ((key) ->
                 rb.addRule "htdocs.#{key}", ["client"], ->
-                    targets: join buildPath, basename(lookup manifest, "htdocs.#{key}.html").replace(/\..*$/, '.html')
+                    targets: join buildPath, basename(manifest.lookup "htdocs.#{key}.html").replace(/\..*$/, '.html')
                     # NOTE: path for foreign feature dependencies is relative, need to resolve it by build the absolute before
                     dependencies: [
-                        join(featurePath, lookup(manifest, "htdocs.#{key}.html"))
-                        resolveFeatureRelativePaths lookup(manifest, "htdocs.#{key}.dependencies.templates"), projectRoot, featurePath
+                        manifest.lookupPath "htdocs.#{key}.html"
+                        manifest.lookupPath "htdocs.#{key}.dependencies.templates"
                     ]
                     actions: "$(JADEC) $< --pretty --obj {\\\"name\\\":\\\"#{manifest.name}\\\"} --out #{buildPath}"
             )(key)

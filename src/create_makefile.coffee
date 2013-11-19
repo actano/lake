@@ -67,10 +67,9 @@ createMakefiles = (cb) ->
             globalTargets = {}
 
             # queue worker function
-            q = async.queue (featurePath, cb) ->
-                cwd = path.join projectRoot, featurePath
-                console.log "Creating .mk file for #{featurePath}"
-                createLocalMakefileInc lakeConfig, projectRoot, cwd,
+            q = async.queue (manifest, cb) ->
+                console.log "Creating .mk file for #{manifest.featurePath}"
+                createLocalMakefileInc lakeConfig, manifest,
                 (err, mkFile, globalFeatureTargets) ->
                     if err? then return cb err
 
@@ -83,6 +82,7 @@ createMakefiles = (cb) ->
 
             errorMessages = []
             for featurePath in featureList
+                manifest = null
                 try
                     manifest = new Manifest projectRoot, featurePath
 
@@ -92,7 +92,7 @@ createMakefiles = (cb) ->
                     debug err.message
                     return cb err
 
-                q.push featurePath, (err, mkFile) ->
+                q.push manifest, (err, mkFile) ->
                     if not err?
                         debug "created #{mkFile}"
                         mkFiles.push mkFile

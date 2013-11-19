@@ -1,0 +1,18 @@
+{
+  "name": "lake-test",
+   "devDependencies": {
+    "chai": "1.5.x",
+    "mocha": "~1.8.1",
+    "coffee-script": "~1.6.3",
+    "stylus": "~0.37.0",
+    "nib": "~1.0.1",
+    "jade": "~0.28.1",
+
+    "component": "~0.17.2",
+    "mocha-phantomjs": "~3.1.2",
+    "phantom": "~0.5.2",
+    "phantomjs": "~1.9.2-0",
+    "js2coffee": "~0.2.0"
+
+  }
+}

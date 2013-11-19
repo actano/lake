@@ -72,7 +72,8 @@ module.exports.lmake = (env, target, outerCb) ->
         (projectRoot, binPath, cb) ->
             env.libPath = path.join projectRoot, env.libPrefix, env.name
             # TODO: refactor, extract names
-            localMake = path.join binPath, '..', '..', 'bin', 'lake'
+            localMake = path.join binPath, '..', '..', '..', 'bin', 'lake'
+            console.log "spawning #{localMake}"
             opt = {cwd: env.libPath}
 
             lmake = spawn localMake, arg, opt
