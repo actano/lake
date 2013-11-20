@@ -1,6 +1,5 @@
 {join, basename, dirname, resolve} = require 'path'
 debug = require('debug')('rules.coffee')
-{resolveLocalComponentPaths} = require "../src/rulebook_helper"
 
 exports.title = 'all'
 exports.description = """
@@ -58,7 +57,7 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                 targets: componentsPath
                 dependencies: [
                     rb.getRuleById("component.json").targets
-                    resolveLocalComponentPaths manifest.client.dependencies.production.local, projectRoot, featurePath, lake.localComponentsPath
+                    join(lake.localComponentsPath, entry) for entry in manifest.lookupPath 'client.dependencies.production.local'
                 ]
                 actions: [
                     "cd #{buildPath} && $(COMPONENT_INSTALL) $(COMPONENT_INSTALL_FLAGS) || rm -rf #{componentsPath}"
@@ -71,7 +70,7 @@ exports.addRules = (lake, featurePath, manifest, ruleBook) ->
                 targets: [join(buildPath, manifest.name) + '.js', join(buildPath, manifest.name) + '.css']
                 dependencies: [
                     # NOTE: path for foreign components is relative, need to resolve it by build the absolute before
-                    resolveLocalComponentPaths manifest.client.dependencies.production.local, projectRoot, featurePath, lake.localComponentsPath
+                    join(lake.localComponentsPath, entry) for  entry in manifest.lookupPath 'client.dependencies.production.local'
                     rule.targets for rule in rb.getRulesByTag('component-build-prerequisite', true)
                 ]
                 # NOTE: component-build don't use (makefile) dependencies parameter, it parse the component.json

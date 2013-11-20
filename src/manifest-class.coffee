@@ -41,8 +41,8 @@ class Manifest
         value = @lookup key
         if value?
             if _.isArray value
-                return (@resolveRelativePath entry for entry in value)
-            return @resolveRelativePath value
+                return ((@replacePlaceholders @resolveRelativePath entry) for entry in value)
+            return @replacePlaceholders @resolveRelativePath value
         else
             undefined
 
