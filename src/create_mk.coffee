@@ -23,10 +23,11 @@ createLocalMakefileInc = (lakeConfig, manifest, cb) ->
         # filename has no extension -> be flexible coffee or js
         #unless fs.existsSync ruleFilePath
         #    return cb new Error "rule file not found at #{ruleFilePath}"
-        try
-            rules = require ruleFilePath
-            rules.addRules lakeConfig, featurePath, manifest, ruleBook
+        # try
+        rules = require ruleFilePath
+        rules.addRules lakeConfig, featurePath, manifest, ruleBook
         
+        ###
         catch err
             console.error "cannot load rulefile #{ruleFile} for " +
                 "feature '#{featurePath}'"
@@ -36,14 +37,16 @@ createLocalMakefileInc = (lakeConfig, manifest, cb) ->
             else
                 console.error firstStackElem
             return cb err
+        ###
         
 
     # close the rule to be on the safe side, regardless if it's closed already
     ruleBook.close()
 
-    try
-        # evaluate the rules, call 'factory()'
-        ruleBook.getRules()
+    #try
+    # evaluate the rules, call 'factory()'
+    ruleBook.getRules()
+    ###
     catch err
     
         console.error "cannot load rulefile #{ruleFile} " +
@@ -54,6 +57,7 @@ createLocalMakefileInc = (lakeConfig, manifest, cb) ->
         else
             console.error firstStackElem
         return cb err
+    ###
 
     globalTargets = {}
     stream = createStream globalTargets,
@@ -103,7 +107,9 @@ writeToStream = (stream, ruleBook, globalTargets) ->
             stream.write "#{rule.targets.join ' '}: "+
                 "#{rule.dependencies.join ' '}\n"
             if rule.actions?
-                stream.write "\t#{rule.actions.join '\n\t'}\n\n"
+                actions = ['@echo .', "@echo #{id}", "@echo #{('-' for i in id).join('')}"]
+                actions = actions.concat rule.actions
+                stream.write "\t#{actions.join '\n\t'}\n\n"
             else
                 stream.write '\n'
 

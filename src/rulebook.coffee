@@ -97,10 +97,11 @@ class RuleBook
         factory._init = true
         rule = undefined
 
-        try
-            @factoryOrder.push id
-            rule = factory._build() # {targets, dependencies, actions}
+        #try
+        @factoryOrder.push id
+        rule = factory._build() # {targets, dependencies, actions}
 
+        ###
         catch err
             parentError = new Error("RuleBook failed for factory #{id}: #{err}")
             if err.root?
@@ -109,7 +110,8 @@ class RuleBook
                 parentError.root = err
             parentError.next = err
             throw parentError
-        
+        ###
+
         for key of rule
             if _(rule[key]).isArray()
                 # if nested array, make it flat
