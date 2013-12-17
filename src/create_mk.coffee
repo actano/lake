@@ -107,7 +107,7 @@ writeToStream = (stream, ruleBook, globalTargets) ->
             stream.write "#{rule.targets.join ' '}: "+
                 "#{rule.dependencies.join ' '}\n"
             if rule.actions?
-                actions = ['@echo .', "@echo #{id}", "@echo #{('-' for i in id).join('')}"]
+                actions = ['@echo ""', "@echo \"\u001b[3;4m#{id}\u001b[24m\""]
                 actions = actions.concat rule.actions
                 stream.write "\t#{actions.join '\n\t'}\n\n"
             else
