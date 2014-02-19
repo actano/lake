@@ -157,6 +157,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         development: manifest.client?.dependencies?.development?.remote or {}
         scripts: processedPaths.scripts.concat processedPaths.templates or []
         styles: processedPaths.styles
+        images: manifest.client?.images or [],
         main: processedPaths.main
 
     fs.writeFileSync componentPath, JSON.stringify component, null, 4
