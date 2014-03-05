@@ -157,6 +157,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         development: manifest.client?.dependencies?.development?.remote or {}
         scripts: processedPaths.scripts.concat processedPaths.templates or []
         styles: processedPaths.styles
+        fonts: manifest.client?.fonts or []
         images: manifest.client?.images or [],
         main: processedPaths.main
 
