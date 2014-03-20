@@ -56,6 +56,10 @@ processPaths = (manifest,
         value = _(convertFileType(manifest.client?[key] or [])).map addPrefix
         return [key, value]
 
+    if manifest.client?.translations?
+        translations = _(convertFileType(_(manifest.client.translations).values())).map addPrefix
+        keyValuePairs.push ['translations', translations]
+
     processedPaths = _(keyValuePairs).object()
 
     if manifest.client?.dependencies?.production?.local?
@@ -155,7 +159,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         local: processedPaths.localFeatures or []
         paths: processedPaths.localPaths or []
         development: manifest.client?.dependencies?.development?.remote or {}
-        scripts: processedPaths.scripts.concat processedPaths.templates or []
+        scripts: _([processedPaths.scripts, processedPaths.templates or [], processedPaths.translations or []]).flatten() 
         styles: processedPaths.styles
         fonts: manifest.client?.fonts or []
         images: manifest.client?.images or [],
