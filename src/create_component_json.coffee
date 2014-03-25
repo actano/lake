@@ -47,18 +47,26 @@ processPaths = (manifest,
     projectRoot,
     manifestPath,
     componentPath,
-    sourceFilePrefix) ->
+    sourceFilePrefix,
+    options) ->
 
     addPrefix = (localpath) ->
         return path.join sourceFilePrefix, localpath
 
     keyValuePairs = ['scripts', 'templates', 'styles'].map (key) ->
-        value = _(convertFileType(manifest.client?[key] or [])).map addPrefix
-        return [key, value]
+        files = convertFileType(manifest.client?[key] or [])
 
-    if manifest.client?.translations?
-        translations = _(convertFileType(_(manifest.client.translations).values())).map addPrefix
-        keyValuePairs.push ['translations', translations]
+        if options.additionalFiles?
+            additionalFiles = options.additionalFiles[key]
+            if additionalFiles?
+                files = files.concat additionalFiles
+
+        files = _(files).map addPrefix
+        return [key, files]
+
+    # if manifest.client?.translations?
+    #     translations = _(convertFileType(_(manifest.client.translations).values())).map addPrefix
+    #     keyValuePairs.push ['translations', translations]
 
     processedPaths = _(keyValuePairs).object()
 
@@ -147,7 +155,8 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         projectRoot,
         manifestPath,
         componentPath,
-        sourceFilePrefix
+        sourceFilePrefix,
+        options
 
     component =
         name: manifest.name or 'GIVE ME A NAME!'
@@ -159,7 +168,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         local: processedPaths.localFeatures or []
         paths: processedPaths.localPaths or []
         development: manifest.client?.dependencies?.development?.remote or {}
-        scripts: _([processedPaths.scripts, processedPaths.templates or [], processedPaths.translations or []]).flatten() 
+        scripts: _([processedPaths.scripts, processedPaths.templates or []]).flatten() 
         styles: processedPaths.styles
         fonts: manifest.client?.fonts or []
         images: manifest.client?.images or [],
@@ -167,35 +176,48 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
 
     fs.writeFileSync componentPath, JSON.stringify component, null, 4
 
-
-module.exports = generateComponent
-
-debug 'started standalone'
-usage = "USAGE: #{path.basename process.argv[1]} <path to manifest> " +
+parseCommandline = (argv) ->
+    usage = "USAGE: #{path.basename process.argv[1]} <path to manifest> " +
     "<path to component.json>"
-debug 'processing arguments ...'
+    debug 'processing arguments ...'
 
-knownOpts =
-    help : Boolean
+    knownOpts =
+        help : Boolean
+        'add-script': [String, Array]
+        'add-style': [String, Array]
 
-shortHands =
-    h: ['--help']
+    shortHands =
+        h: ['--help']
 
-parsedArgs = nopt knownOpts, shortHands, process.argv, 2
+    parsedArgs = nopt knownOpts, shortHands, argv, 0
+    return parsedArgs
 
-if parsedArgs.help or parsedArgs.argv.remain.length isnt 2
-    console.log usage
-    process.exit 0
-
-findProjectRoot (err, projectRoot) ->
-    if err?
-        console.error err.message
-        process.exit 1
+if require.main is module
 
     debug 'started standalone'
-    [manifestPath, componentPath] = parsedArgs.argv.remain
-    generateComponent projectRoot, manifestPath, componentPath
-    
+    parsedArgs = parseCommandline process.argv.splice 2
+
+    if parsedArgs.help or parsedArgs.argv.remain.length isnt 2
+        console.log usage
+        process.exit 1
+
+    findProjectRoot (err, projectRoot) ->
+        if err?
+            console.error err.message
+            process.exit 1
+
+        debug 'started standalone'
+        [manifestPath, componentPath] = parsedArgs.argv.remain
+        generateComponent projectRoot, manifestPath, componentPath, {
+            additionalFiles:
+                scripts: parsedArgs['add-script']
+                styles: parsedArgs['add-style']
+        }
+
+else
+
+    module.exports.generateComponent = generateComponent
+    module.exports.parseCommandline = parseCommandline
 
 
 
