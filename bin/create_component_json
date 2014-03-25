@@ -1,2 +1,3 @@
 #!/usr/bin/env node
-require("../lib/create_component_json");
+main = require("../lib/create_component_json").main;
+main();

@@ -55,13 +55,15 @@ processPaths = (manifest,
 
     keyValuePairs = ['scripts', 'templates', 'styles'].map (key) ->
         files = convertFileType(manifest.client?[key] or [])
+        files = _(files).map addPrefix
 
         if options.additionalFiles?
             additionalFiles = options.additionalFiles[key]
             if additionalFiles?
-                files = files.concat additionalFiles
+                for f in additionalFiles
+                    f = path.relative path.dirname(componentPath), f
+                    files.push f
 
-        files = _(files).map addPrefix
         return [key, files]
 
     # if manifest.client?.translations?
@@ -176,9 +178,10 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
 
     fs.writeFileSync componentPath, JSON.stringify component, null, 4
 
+usage = "USAGE: #{path.basename process.argv[1]} <path to manifest> " +
+"<path to component.json>"
+
 parseCommandline = (argv) ->
-    usage = "USAGE: #{path.basename process.argv[1]} <path to manifest> " +
-    "<path to component.json>"
     debug 'processing arguments ...'
 
     knownOpts =
@@ -192,12 +195,14 @@ parseCommandline = (argv) ->
     parsedArgs = nopt knownOpts, shortHands, argv, 0
     return parsedArgs
 
-if require.main is module
 
+main = ->
     debug 'started standalone'
     parsedArgs = parseCommandline process.argv.splice 2
 
     if parsedArgs.help or parsedArgs.argv.remain.length isnt 2
+        console.log parsedArgs
+        console.log require('../package.json').version
         console.log usage
         process.exit 1
 
@@ -214,10 +219,10 @@ if require.main is module
                 styles: parsedArgs['add-style']
         }
 
-else
 
-    module.exports.generateComponent = generateComponent
-    module.exports.parseCommandline = parseCommandline
+module.exports.generateComponent = generateComponent
+module.exports.parseCommandline = parseCommandline
+module.exports.main = main
 
 
 
