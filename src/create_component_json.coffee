@@ -53,9 +53,11 @@ processPaths = (manifest,
     addPrefix = (localpath) ->
         return path.join sourceFilePrefix, localpath
 
-    keyValuePairs = ['scripts', 'templates', 'styles'].map (key) ->
-        files = convertFileType(manifest.client?[key] or [])
-        files = _(files).map addPrefix
+    keyValuePairs = ['scripts', 'templates', 'styles', 'fonts'].map (key) ->
+        files = []
+        if key isnt 'fonts'
+            files = convertFileType(manifest.client?[key] or [])
+            files = _(files).map addPrefix
 
         if options.additionalFiles?
             additionalFiles = options.additionalFiles[key]
@@ -172,7 +174,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         development: manifest.client?.dependencies?.development?.remote or {}
         scripts: _([processedPaths.scripts, processedPaths.templates or []]).flatten() 
         styles: processedPaths.styles
-        fonts: manifest.client?.fonts or []
+        fonts: processedPaths.fonts
         images: manifest.client?.images or [],
         main: processedPaths.main
 
@@ -188,6 +190,7 @@ parseCommandline = (argv) ->
         help : Boolean
         'add-script': [String, Array]
         'add-style': [String, Array]
+        'add-font': [String, Array]
 
     shortHands =
         h: ['--help']
@@ -217,6 +220,7 @@ main = ->
             additionalFiles:
                 scripts: parsedArgs['add-script']
                 styles: parsedArgs['add-style']
+                fonts: parsedArgs['add-font']
         }
 
 
