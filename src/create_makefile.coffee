@@ -33,7 +33,7 @@ mergeObject = (featureTargets, globalTargets) ->
     return
 
 
-createMakefiles = (output, cb) ->
+createMakefiles = (input, output, cb) ->
 
     async.waterfall [
         (cb) ->
@@ -48,9 +48,12 @@ createMakefiles = (output, cb) ->
 
         (binPath, projectRoot, cb) ->
             debug 'retrieve feature list'
-            getFeatureList (err, list) ->
-                if err? then return cb err
-                cb null, binPath, projectRoot, list
+            if input?
+                cb null, binPath, projectRoot, [input]
+            else
+                getFeatureList (err, list) ->
+                    if err? then return cb err
+                    cb null, binPath, projectRoot, list
 
         (binPath, projectRoot, featureList, cb) ->
             lakeConfigPath = path.join projectRoot, '.lake', 'config'
