@@ -47,7 +47,7 @@ createMakefiles = (cb) ->
                 cb null, binPath, projectRoot
 
         (binPath, projectRoot, cb) ->
-            debug 'retreive feature list'
+            debug 'retrieve feature list'
             getFeatureList (err, list) ->
                 if err? then return cb err
                 cb null, binPath, projectRoot, list
