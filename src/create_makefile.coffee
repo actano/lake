@@ -33,7 +33,7 @@ mergeObject = (featureTargets, globalTargets) ->
     return
 
 
-createMakefiles = (cb) ->
+createMakefiles = (output, cb) ->
 
     async.waterfall [
         (cb) ->
@@ -66,10 +66,14 @@ createMakefiles = (cb) ->
             mkFiles = []
             globalTargets = {}
 
+            # Default output points to current behavior: .lake/build
+            # This can be changed once all parts expect the includes at build/lake
+            output ?= path.join lakeConfig.lakePath, 'build'
+
             # queue worker function
             q = async.queue (manifest, cb) ->
                 console.log "Creating .mk file for #{manifest.featurePath}"
-                createLocalMakefileInc lakeConfig, manifest,
+                createLocalMakefileInc lakeConfig, manifest, output,
                 (err, mkFile, globalFeatureTargets) ->
                     if err? then return cb err
 

@@ -19,6 +19,7 @@ module.exports.build = ->
     knownOpts =
         preventMakefileRebuild: Boolean
         preventMakeRun: Boolean
+        output: String
         help: Boolean
         version: Boolean
         verbose: Boolean
@@ -26,6 +27,7 @@ module.exports.build = ->
     shortHands = {
         p: ['--preventMakefileRebuild']
         d: ['--preventMakeRun']
+        o: ['--output']
         h: ['--help']
         v: ['--version']
         V: ['--verbose']
@@ -60,7 +62,7 @@ module.exports.build = ->
                 cb null, projectRoot
 
             debug('createMakefiles')
-            createMakefiles (err) ->
+            createMakefiles parsedArgs.output, (err) ->
                 cb err, projectRoot
 
         (projectRoot, cb) ->

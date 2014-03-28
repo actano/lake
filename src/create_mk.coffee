@@ -14,7 +14,7 @@ cfg = require './local-make'
 
 MANIFEST_FILE_NAME = 'Manifest'
 
-createLocalMakefileInc = (lakeConfig, manifest, cb) ->
+createLocalMakefileInc = (lakeConfig, manifest, output, cb) ->
     {projectRoot, featurePath} = manifest
 
     ruleBook = new RuleBook()
@@ -60,17 +60,16 @@ createLocalMakefileInc = (lakeConfig, manifest, cb) ->
     ###
 
     globalTargets = {}
-    stream = createStream globalTargets,
-        lakeConfig, projectRoot, featurePath, cb
+    stream = createStream globalTargets, lakeConfig, projectRoot, featurePath, output, cb
 
     writeToStream stream, ruleBook, globalTargets
     stream.end()
 
 
-createStream = (globalTargets, lakeConfig, projectRoot, featurePath, cb) ->
+createStream = (globalTargets, lakeConfig, projectRoot, featurePath, output, cb) ->
 
     featureName = path.basename featurePath
-    mkFilePath = path.join lakeConfig.lakePath, 'build', featureName + '.mk'
+    mkFilePath = path.join path.resolve(projectRoot, output), featureName + '.mk'
     mkDirectory = path.dirname mkFilePath
     unless fs.existsSync mkDirectory
         fs.mkdirSync mkDirectory
