@@ -124,6 +124,10 @@ createMakefiles = (input, output, cb) ->
                         globalTargets
 
         (lakeConfig, binPath, projectRoot, mkFiles, globalTargets, cb) ->
+            # Don't write a top-level Makefile if we only want to create one include
+            if input?
+                return cb null
+
             # create temp Makefile.eco
             debug 'open write stream for Makefile'
             stream = fs.createWriteStream path.join(projectRoot, 'Makefile')
