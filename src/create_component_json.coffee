@@ -173,10 +173,26 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         paths: processedPaths.localPaths or []
         development: manifest.client?.dependencies?.development?.remote or {}
         scripts: _([processedPaths.scripts, processedPaths.templates or []]).flatten() 
+        main: processedPaths.main
         styles: processedPaths.styles
         fonts: processedPaths.fonts
         images: manifest.client?.images or [],
-        main: processedPaths.main
+
+
+    # clean up
+    if component.local.length is 0
+        delete component.local
+        delete component.paths
+
+    if component.scripts.length is 0
+        delete component.scripts
+        delete component.main
+
+
+    # remove some empty lists
+    for key in ['images', 'fonts', 'styles']
+        if component[key].length is 0
+            delete component[key]
 
     fs.writeFileSync componentPath, JSON.stringify component, null, 4
 
