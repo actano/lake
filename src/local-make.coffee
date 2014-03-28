@@ -21,6 +21,7 @@ module.exports.build = ->
         preventMakeRun: Boolean
         input: String
         output: String
+        global: String
         help: Boolean
         version: Boolean
         verbose: Boolean
@@ -30,6 +31,7 @@ module.exports.build = ->
         d: ['--preventMakeRun']
         i: ['--input']
         o: ['--output']
+        g: ['--global']
         h: ['--help']
         v: ['--version']
         V: ['--verbose']
@@ -64,7 +66,7 @@ module.exports.build = ->
                 cb null, projectRoot
 
             debug('createMakefiles')
-            createMakefiles parsedArgs.input, parsedArgs.output, (err) ->
+            createMakefiles parsedArgs.input, parsedArgs.output, parsedArgs.global, (err) ->
                 cb err, projectRoot
 
         (projectRoot, cb) ->

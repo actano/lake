@@ -33,7 +33,7 @@ mergeObject = (featureTargets, globalTargets) ->
     return
 
 
-createMakefiles = (input, output, cb) ->
+createMakefiles = (input, output, global, cb) ->
 
     async.waterfall [
         (cb) ->
@@ -124,26 +124,41 @@ createMakefiles = (input, output, cb) ->
                         globalTargets
 
         (lakeConfig, binPath, projectRoot, mkFiles, globalTargets, cb) ->
+            global ?= path.join projectRoot, 'Makefile'
             # Don't write a top-level Makefile if we only want to create one include
             if input?
-                return cb null
+                stream = fs.createWriteStream global
+                stream.on 'error', (err) ->
+                    console.error 'error occurs during streaming global Makefile'
+                    return cb err
 
-            # create temp Makefile.eco
-            debug 'open write stream for Makefile'
-            stream = fs.createWriteStream path.join(projectRoot, 'Makefile')
-            stream.on 'error', (err) ->
-                console.error 'error occurs during streaming global Makefile'
-                return cb err
+                stream.once 'finish', ->
+                    debug 'Makefile stream finished'
+                    return cb null
+                writeGlobalRulesToStream stream, globalTargets
+            else
+                # create temp Makefile.eco
+                debug 'open write stream for Makefile'
+                #stream = fs.createWriteStream path.join(projectRoot, 'Makefile')
+                stream = fs.createWriteStream global
+                stream.on 'error', (err) ->
+                    console.error 'error occurs during streaming global Makefile'
+                    return cb err
 
-            stream.once 'finish', ->
-                debug 'Makefile stream finished'
-                return cb null
+                stream.once 'finish', ->
+                    debug 'Makefile stream finished'
+                    return cb null
 
-            writeMakefileToStream stream, lakeConfig, binPath, projectRoot,
-                mkFiles, globalTargets
-            debug 'written it'
+                writeMakefileToStream stream, lakeConfig, binPath, projectRoot,
+                    mkFiles, globalTargets
+                debug 'written it'
 
         ], cb
+
+writeGlobalRulesToStream = (stream, globalTargets) ->
+    # global targets, added by RuleBook API
+    for targetName, dependencies of globalTargets
+        stream.write "#{targetName}: #{dependencies.join ' '}\n"
 
 writeMakefileToStream = (stream, lakeConfig, binPath, projectRoot, mkFiles,
         globalTargets) ->
@@ -180,8 +195,9 @@ writeMakefileToStream = (stream, lakeConfig, binPath, projectRoot, mkFiles,
     stream.write '\n\n'
 
     # global targets, added by RuleBook API
-    for targetName, dependencies of globalTargets
-        stream.write "#{targetName}: #{dependencies.join ' '}\n"
+    #for targetName, dependencies of globalTargets
+    #    stream.write "#{targetName}: #{dependencies.join ' '}\n"
+    writeGlobalRulesToStream stream, globalTargets
 
     stream.write '\n'
 
