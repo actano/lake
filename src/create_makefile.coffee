@@ -33,7 +33,7 @@ mergeObject = (featureTargets, globalTargets) ->
     return
 
 
-createMakefiles = (cb) ->
+createMakefiles = (input, output, global, cb) ->
 
     async.waterfall [
         (cb) ->
@@ -48,9 +48,12 @@ createMakefiles = (cb) ->
 
         (binPath, projectRoot, cb) ->
             debug 'retrieve feature list'
-            getFeatureList (err, list) ->
-                if err? then return cb err
-                cb null, binPath, projectRoot, list
+            if input?
+                cb null, binPath, projectRoot, [input]
+            else
+                getFeatureList (err, list) ->
+                    if err? then return cb err
+                    cb null, binPath, projectRoot, list
 
         (binPath, projectRoot, featureList, cb) ->
             lakeConfigPath = path.join projectRoot, '.lake', 'config'
@@ -66,10 +69,14 @@ createMakefiles = (cb) ->
             mkFiles = []
             globalTargets = {}
 
+            # Default output points to current behavior: .lake/build
+            # This can be changed once all parts expect the includes at build/lake
+            output ?= path.join lakeConfig.lakePath, 'build'
+
             # queue worker function
             q = async.queue (manifest, cb) ->
                 console.log "Creating .mk file for #{manifest.featurePath}"
-                createLocalMakefileInc lakeConfig, manifest,
+                createLocalMakefileInc lakeConfig, manifest, output,
                 (err, mkFile, globalFeatureTargets) ->
                     if err? then return cb err
 
@@ -117,22 +124,41 @@ createMakefiles = (cb) ->
                         globalTargets
 
         (lakeConfig, binPath, projectRoot, mkFiles, globalTargets, cb) ->
-            # create temp Makefile.eco
-            debug 'open write stream for Makefile'
-            stream = fs.createWriteStream path.join(projectRoot, 'Makefile')
-            stream.on 'error', (err) ->
-                console.error 'error occurs during streaming global Makefile'
-                return cb err
+            global ?= path.join projectRoot, 'Makefile'
+            # Don't write a top-level Makefile if we only want to create one include
+            if input?
+                stream = fs.createWriteStream global
+                stream.on 'error', (err) ->
+                    console.error 'error occurs during streaming global Makefile'
+                    return cb err
 
-            stream.once 'finish', ->
-                debug 'Makefile stream finished'
-                return cb null
+                stream.once 'finish', ->
+                    debug 'Makefile stream finished'
+                    return cb null
+                writeGlobalRulesToStream stream, globalTargets
+            else
+                # create temp Makefile.eco
+                debug 'open write stream for Makefile'
+                #stream = fs.createWriteStream path.join(projectRoot, 'Makefile')
+                stream = fs.createWriteStream global
+                stream.on 'error', (err) ->
+                    console.error 'error occurs during streaming global Makefile'
+                    return cb err
 
-            writeMakefileToStream stream, lakeConfig, binPath, projectRoot,
-                mkFiles, globalTargets
-            debug 'written it'
+                stream.once 'finish', ->
+                    debug 'Makefile stream finished'
+                    return cb null
+
+                writeMakefileToStream stream, lakeConfig, binPath, projectRoot,
+                    mkFiles, globalTargets
+                debug 'written it'
 
         ], cb
+
+writeGlobalRulesToStream = (stream, globalTargets) ->
+    # global targets, added by RuleBook API
+    for targetName, dependencies of globalTargets
+        stream.write "#{targetName}: #{dependencies.join ' '}\n"
 
 writeMakefileToStream = (stream, lakeConfig, binPath, projectRoot, mkFiles,
         globalTargets) ->
@@ -169,8 +195,7 @@ writeMakefileToStream = (stream, lakeConfig, binPath, projectRoot, mkFiles,
     stream.write '\n\n'
 
     # global targets, added by RuleBook API
-    for targetName, dependencies of globalTargets
-        stream.write "#{targetName}: #{dependencies.join ' '}\n"
+    writeGlobalRulesToStream stream, globalTargets
 
     stream.write '\n'
 

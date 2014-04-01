@@ -18,12 +18,20 @@ pkg = require '../package'
 module.exports.build = ->
     knownOpts =
         preventMakefileRebuild: Boolean
+        preventMakeRun: Boolean
+        input: String
+        output: String
+        global: String
         help: Boolean
         version: Boolean
         verbose: Boolean
 
     shortHands = {
         p: ['--preventMakefileRebuild']
+        d: ['--preventMakeRun']
+        i: ['--input']
+        o: ['--output']
+        g: ['--global']
         h: ['--help']
         v: ['--version']
         V: ['--verbose']
@@ -58,10 +66,13 @@ module.exports.build = ->
                 cb null, projectRoot
 
             debug('createMakefiles')
-            createMakefiles (err) ->
+            createMakefiles parsedArgs.input, parsedArgs.output, parsedArgs.global, (err) ->
                 cb err, projectRoot
 
         (projectRoot, cb) ->
+            if parsedArgs.preventMakeRun
+                cb null, 0
+                return
             console.log '------------------------------'
             console.log "project root is #{projectRoot}"
 
