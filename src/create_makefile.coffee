@@ -195,8 +195,6 @@ writeMakefileToStream = (stream, lakeConfig, binPath, projectRoot, mkFiles,
     stream.write '\n\n'
 
     # global targets, added by RuleBook API
-    #for targetName, dependencies of globalTargets
-    #    stream.write "#{targetName}: #{dependencies.join ' '}\n"
     writeGlobalRulesToStream stream, globalTargets
 
     stream.write '\n'
