@@ -50,6 +50,7 @@ module.exports.build = ->
         console.log inspect shortHands
         process.exit 0
 
+    parsedArgs.preventMakefileRebuild ?= true
 
     if parsedArgs.preventMakefileRebuild
         console.log '(don\'t update Makefile.mk)'
