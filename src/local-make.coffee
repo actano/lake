@@ -65,6 +65,7 @@ module.exports.build = ->
         (projectRoot, cb) ->
             if parsedArgs.preventMakefileRebuild
                 cb null, projectRoot
+                return
 
             debug('createMakefiles')
             createMakefiles parsedArgs.input, parsedArgs.output, parsedArgs.global, (err) ->
