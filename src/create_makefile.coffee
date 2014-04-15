@@ -49,7 +49,7 @@ createMakefiles = (input, output, global, cb) ->
         (binPath, projectRoot, cb) ->
             debug 'retrieve feature list'
             if input?
-                cb null, binPath, projectRoot, [input]
+                cb null, binPath, projectRoot, input
             else
                 getFeatureList (err, list) ->
                     if err? then return cb err

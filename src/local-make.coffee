@@ -19,7 +19,7 @@ module.exports.build = ->
     knownOpts =
         preventMakefileRebuild: Boolean
         preventMakeRun: Boolean
-        input: String
+        input: [String, Array]
         output: String
         global: String
         help: Boolean
