@@ -169,6 +169,7 @@ generateComponent = (projectRoot, manifestPath, componentPath, options = {}) ->
         license: manifest.license or 'MIT'
         keywords: manifest.keywords or []
         dependencies: manifest.client?.dependencies?.production?.remote or {}
+        remotes: ["https://raw.githubusercontent.com"]
         local: processedPaths.localFeatures or []
         paths: processedPaths.localPaths or []
         development: manifest.client?.dependencies?.development?.remote or {}
