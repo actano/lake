@@ -15,6 +15,33 @@ pkg = require '../package'
 {createMakefiles} = require('./create_makefile')
 {findProjectRoot} = require('./file-locator')
 
+getHelpTopics = (projectRoot) ->
+    topics = []
+
+    lakeConfig = require path.join projectRoot, '.lake', 'config'
+    for ruleFile in lakeConfig.rules
+        rule = require path.join projectRoot, ruleFile
+
+        if rule.readme?.name? and rule.readme?.path?
+            topic =
+                name: rule.readme.name
+                description: rule.description
+                path: rule.readme.path
+
+            topics.push topic
+
+    return topics
+
+printHelpTopic = (projectRoot, topics, requestedTopic) ->
+    for topic in topics
+        if topic.name is requestedTopic
+            helpText = fs.readFileSync topic.path, 'utf8'
+
+            console.log "\nHelp for '%s':\n", requestedTopic
+            console.log helpText
+
+            break
+
 module.exports.build = ->
     knownOpts =
         preventMakefileRebuild: Boolean
@@ -22,7 +49,7 @@ module.exports.build = ->
         input: [String, Array]
         output: String
         global: String
-        help: Boolean
+        help: String
         version: Boolean
         verbose: Boolean
 
@@ -46,9 +73,30 @@ module.exports.build = ->
         return process.exit 0
 
     if parsedArgs.help
-        console.log 'USAGE'
-        console.log inspect shortHands
-        process.exit 0
+        findProjectRoot (err, projectRoot) ->
+            usage = ->
+                console.log 'USAGE'
+                console.log inspect shortHands
+
+            return usage() if err?
+
+            topics = getHelpTopics projectRoot
+
+            if parsedArgs.help.toString() is 'true'
+                usage()
+
+                console.log "\nRun 'lake -h [topic]' to show additional information about a specific topic."
+                console.log "Available topics are:"
+
+                for topic in topics
+                    text = '\t' + topic.name
+                    text += ' - ' + topic.description if topic.description?
+                    console.log text
+            else
+                printHelpTopic projectRoot, topics, parsedArgs.help
+
+            process.exit 0
+        return
 
     parsedArgs.preventMakefileRebuild ?= true
 
@@ -75,6 +123,7 @@ module.exports.build = ->
             if parsedArgs.preventMakeRun
                 cb null, 0
                 return
+
             console.log '------------------------------'
             console.log "project root is #{projectRoot}"
 
