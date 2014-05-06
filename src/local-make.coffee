@@ -33,14 +33,20 @@ getHelpTopics = (projectRoot) ->
     return topics
 
 printHelpTopic = (projectRoot, topics, requestedTopic) ->
+    topicFound = false
+
     for topic in topics
         if topic.name is requestedTopic
             helpText = fs.readFileSync topic.path, 'utf8'
 
-            console.log "\nHelp for '%s':\n", requestedTopic
+            console.log "\nHelp for '#{requestedTopic}':\n"
             console.log helpText
 
+            topicFound = true
+
             break
+
+    console.log "\nHelp topic '#{requestedTopic}' doesn't exist." if not topicFound
 
 module.exports.build = ->
     knownOpts =
@@ -78,6 +84,12 @@ module.exports.build = ->
                 console.log 'USAGE'
                 console.log inspect shortHands
 
+            listTopics = (topics) ->
+                for topic in topics
+                    text = '\t' + topic.name
+                    text += ' - ' + topic.description if topic.description?
+                    console.log text
+
             return usage() if err?
 
             topics = getHelpTopics projectRoot
@@ -88,10 +100,9 @@ module.exports.build = ->
                 console.log "\nRun 'lake -h [topic]' to show additional information about a specific topic."
                 console.log "Available topics are:"
 
-                for topic in topics
-                    text = '\t' + topic.name
-                    text += ' - ' + topic.description if topic.description?
-                    console.log text
+                listTopics topics
+            else if parsedArgs.help is 'topics'
+                listTopics topics
             else
                 printHelpTopic projectRoot, topics, parsedArgs.help
 
