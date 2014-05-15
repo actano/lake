@@ -51,7 +51,6 @@
     "difflet": "~0.2.6",
     "dive": "~0.3.0",
     "tmp": "0.0.21",
-    "coffee-script": "~1.7.1",
     "coffee-errors": "~0.8.6"
   }
 }
