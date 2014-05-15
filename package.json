@@ -24,33 +24,15 @@
   },
   "readmeFilename": "README.md",
   "dependencies": {
-    "coffee-script": "~1.6.3",
-    "nconf": "~0.6.7",
+    "coffee-script": "~1.7.1",
+    "coffee-errors": "~0.8.6",
     "underscore": "~1.4.4",
     "debug": "~0.7.2",
     "mkdirp": "~0.3.5",
     "carrier": "~0.1.10",
-    "findup-sync": "~0.1.2",
     "nopt": "~2.1.1",
-    "once": "~1.1.1",
     "eco": "~1.1.0-rc-3",
     "async": "~0.2.9",
-    "pipette": "~0.9.3",
-    "component": "~0.17.2",
-    "stylus": "~0.37.0",
-    "nib": "~1.0.1",
-    "jade": "~0.28.1",
-    "express": "~3.3.8",
-    "supertest": "~0.7.1",
-    "js2coffee": "~0.2.0",
     "accessors": "0.0.2"
-  },
-  "devDependencies": {
-    "chai": "1.5.x",
-    "mocha": "~1.8.1",
-    "difflet": "~0.2.6",
-    "dive": "~0.3.0",
-    "tmp": "0.0.21",
-    "coffee-errors": "~0.8.6"
   }
 }
