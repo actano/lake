@@ -20,8 +20,7 @@
     "build": "./compile.sh",
     "clean": "rm -rf lib",
     "prepublish": "npm run build",
-    "postpublish": "npm run clean",
-    "test": "./tests.sh"
+    "postpublish": "npm run clean"
   },
   "readmeFilename": "README.md",
   "dependencies": {
