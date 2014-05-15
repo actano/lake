@@ -1,9 +1,0 @@
-#!/usr/bin/env coffee
-
-###
-# use coffee instead of node
-# for development mode for example, coffee must be in the PATH
-# no build required after changes in src directory
-###
-
-require '../src/local-make'

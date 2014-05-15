@@ -1,14 +1,9 @@
 {
   "name": "lake",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "description": "a very oppinionated make-based build tool for complex and modular web applications that run on NodeJS",
   "bin": {
-    "lake": "./bin/lake",
-    "lake-init": "./bin/lake-init",
-    "lake-add": "./bin/lake-add",
-    "lake-list": "./bin/lake-list",
-    "create_component_json": "./bin/create_component_json",
-    "manifest-migration": "./bin/manifest-migration"
+    "lake": "./bin/lake"
   },
   "repository": {
     "type": "git",
@@ -48,9 +43,6 @@
     "jade": "~0.28.1",
     "express": "~3.3.8",
     "supertest": "~0.7.1",
-    "mocha-phantomjs": "~3.1.2",
-    "phantom": "~0.5.2",
-    "phantomjs": "~1.9.2-0",
     "js2coffee": "~0.2.0",
     "accessors": "0.0.2"
   },
