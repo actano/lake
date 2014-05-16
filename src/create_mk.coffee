@@ -10,7 +10,6 @@ debug = require('debug')('lake.create_mk')
 
 # Local dep
 RuleBook = require './rulebook'
-cfg = require './local-make'
 
 MANIFEST_FILE_NAME = 'Manifest'
 
