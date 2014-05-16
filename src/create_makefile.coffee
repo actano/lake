@@ -64,7 +64,6 @@ createMakefiles = (input, output, global, cb) ->
 
             lakeConfig = require lakeConfigPath
             mkFiles = []
-            globalTargets = {}
 
             # Default output points to current behavior: .lake/build
             # This can be changed once all parts expect the includes at build/lake
@@ -74,10 +73,8 @@ createMakefiles = (input, output, global, cb) ->
             q = async.queue (manifest, cb) ->
                 console.log "Creating .mk file for #{manifest.featurePath}"
                 createLocalMakefileInc lakeConfig, manifest, output,
-                (err, mkFile, globalFeatureTargets) ->
+                (err, mkFile) ->
                     if err? then return cb err
-
-                    mergeObject globalFeatureTargets, globalTargets
 
                     debug "finished with #{mkFile}"
                     cb null, mkFile
@@ -89,7 +86,6 @@ createMakefiles = (input, output, global, cb) ->
                 manifest = null
                 try
                     manifest = new Manifest projectRoot, featurePath
-
                 catch err
                     err.message = "Error in Manifest #{featurePath}: " +
                     "#{err.message}"
@@ -113,14 +109,12 @@ createMakefiles = (input, output, global, cb) ->
             q.drain = ->
                 debug 'Makefile generation finished ' +
                 'for feature all features in .lake'
-                debug globalTargets
                 if errorMessages.length
                     cb new Error "failed to create Makefile" + errorMessages
                 else
-                    cb null, lakeConfig, binPath, projectRoot, mkFiles,
-                        globalTargets
+                    cb null, lakeConfig, binPath, projectRoot, mkFiles
 
-        (lakeConfig, binPath, projectRoot, mkFiles, globalTargets, cb) ->
+        (lakeConfig, binPath, projectRoot, mkFiles, cb) ->
             if not global
                 return cb()
             stream = fs.createWriteStream global

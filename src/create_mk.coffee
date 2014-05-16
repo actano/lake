@@ -20,53 +20,20 @@ createLocalMakefileInc = (lakeConfig, manifest, output, cb) ->
     ruleBook = new RuleBook()
     for ruleFile in lakeConfig.rules
         ruleFilePath = path.join projectRoot, ruleFile
-        # filename has no extension -> be flexible coffee or js
-        #unless fs.existsSync ruleFilePath
-        #    return cb new Error "rule file not found at #{ruleFilePath}"
-        # try
         rules = require ruleFilePath
         rules.addRules lakeConfig, featurePath, manifest, ruleBook
-        
-        ###
-        catch err
-            console.error "cannot load rulefile #{ruleFile} for " +
-                "feature '#{featurePath}'"
-            [message, firstStackElem] = err.stack.split '\n'
-            if cfg.verbose
-                console.error err.stack
-            else
-                console.error firstStackElem
-            return cb err
-        ###
         
 
     # close the rule to be on the safe side, regardless if it's closed already
     ruleBook.close()
 
-    #try
-    # evaluate the rules, call 'factory()'
-    ruleBook.getRules()
-    ###
-    catch err
-    
-        console.error "cannot load rulefile #{ruleFile} " +
-            "for feature '#{featurePath}'"
-        [message, firstStackElem] = err.stack.split '\n'
-        if cfg.verbose
-            console.error err.stack
-        else
-            console.error firstStackElem
-        return cb err
-    ###
+    stream = createStream lakeConfig, projectRoot, featurePath, output, cb
 
-    globalTargets = {}
-    stream = createStream globalTargets, lakeConfig, projectRoot, featurePath, output, cb
-
-    writeToStream stream, ruleBook, globalTargets
+    writeToStream stream, ruleBook
     stream.end()
 
 
-createStream = (globalTargets, lakeConfig, projectRoot, featurePath, output, cb) ->
+createStream = (lakeConfig, projectRoot, featurePath, output, cb) ->
 
     featureName = path.basename featurePath
     mkFilePath = path.join path.resolve(projectRoot, output), featureName + '.mk'
@@ -81,16 +48,11 @@ createStream = (globalTargets, lakeConfig, projectRoot, featurePath, output, cb)
 
     stream.once 'finish', ->
         debug 'Makefile stream finished'
-        return cb null, mkFilePath, globalTargets
+        return cb null, mkFilePath
 
 
-writeToStream = (stream, ruleBook, globalTargets) ->
-    for id, rule of ruleBook.getRules()
-        if rule.globalTargets?
-            for globalKey in rule.globalTargets
-                unless globalTargets[globalKey]?
-                    globalTargets[globalKey] = []
-                globalTargets[globalKey].push _([rule.targets]).flatten().join(' ')
+writeToStream = (stream, ruleBook) ->
+    for rule in ruleBook.getRules()
 
         rule.dependencies or= []
         # wrap everything into an array and then flatten
@@ -102,18 +64,13 @@ writeToStream = (stream, ruleBook, globalTargets) ->
         # print the rule only if a target exists
         # otherwise user created the rule for RuleBook API features
         if rule.targets?
-            stream.write "# #{id}\n"
             stream.write "#{rule.targets.join ' '}: "+
                 "#{rule.dependencies.join ' '}\n"
             if rule.actions?
-                actions = ['@echo ""', "@echo \"\u001b[3;4m#{id}\u001b[24m\""]
+                actions = ['@echo ""', "@echo \"\u001b[3;4m#{rule.targets}\u001b[24m\""]
                 actions = actions.concat rule.actions
                 stream.write "\t#{actions.join '\n\t'}\n\n"
             else
                 stream.write '\n'
 
-module.exports = {
-    createLocalMakefileInc
-    createStream
-    writeToStream
-}
+module.exports.createLocalMakefileInc = createLocalMakefileInc
