@@ -21,38 +21,6 @@ npm_bin = (cb) ->
     exec 'npm bin', (err, stdout, stderr) ->
         cb err, stdout
 
-exports.getFeatureList = (cb) ->
-    async.waterfall [
-        exports.findProjectRoot
-
-        (projectRoot, cb) ->
-            featuresPath = path.join projectRoot, '.lake/features'
-            readStream = fs.createReadStream featuresPath
-            lines = []
-            myCarrier = carrier.carry readStream
-            myCarrier.on 'line', (line) ->
-                # trim
-                debug 'adding line'
-                line = line.replace /^\s+|\s+$/g, ''
-                if line.substring(0,1) isnt '#'
-                    lines.push line
-        
-            readStream.on 'end', ->
-                debug 'finished.'
-                cb null, lines
-
-            readStream.on 'error', (err) ->
-                cb err
-
-    ], (err, result) ->
-        if err?
-            console.error err
-            return err
-        cb null, result
-
-
-
-
 exports.findProjectRoot = (cb) ->
     if projectRoot?
         return cb null, projectRoot

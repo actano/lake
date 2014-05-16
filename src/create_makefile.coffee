@@ -12,7 +12,6 @@ debug = require('debug')('create-makefile')
 {
     findProjectRoot
     locateNodeModulesBin
-    getFeatureList
 } = require './file-locator'
 
 createMakefiles = (input, output, global, cb) ->
@@ -27,15 +26,6 @@ createMakefiles = (input, output, global, cb) ->
             findProjectRoot (err, projectRoot) ->
                 if err? then return cb err
                 cb null, binPath, projectRoot
-
-        (binPath, projectRoot, cb) ->
-            debug 'retrieve feature list'
-            if input?
-                cb null, binPath, projectRoot, input
-            else
-                getFeatureList (err, list) ->
-                    if err? then return cb err
-                    cb null, binPath, projectRoot, list
 
         (binPath, projectRoot, featureList, cb) ->
             lakeConfigPath = path.join projectRoot, '.lake', 'config'
