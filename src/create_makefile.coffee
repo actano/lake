@@ -1,5 +1,4 @@
 # Std library
-fs = require 'fs'
 path = require 'path'
 
 # Third party

@@ -1,10 +1,3 @@
-# Std library
-{inspect} = require 'util'
-
-# Third party
-debug = require('debug')('lake.rulebook')
-{_} = require 'underscore'
-
 class RuleBook
 
     constructor: ->
