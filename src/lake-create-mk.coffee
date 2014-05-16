@@ -1,6 +1,4 @@
 # Std library
-fs = require 'fs'
-path = require 'path'
 {inspect} = require 'util'
 
 # Third party
@@ -13,7 +11,6 @@ require 'coffee-errors'
 # Local dep
 pkg = require '../package'
 {createMakefiles} = require('./create_makefile')
-{findProjectRoot} = require('./file-locator')
 
 module.exports.build = ->
     knownOpts =
@@ -33,7 +30,7 @@ module.exports.build = ->
 
     if parsedArgs.version
         console.log pkg.version
-        return process.exit 0
+        process.exit 0
 
     if parsedArgs.help
         console.log 'USAGE'
