@@ -11,23 +11,18 @@ debug = require('debug')('create-makefile')
 {createLocalMakefileInc} = require './create_mk'
 {
     findProjectRoot
-    locateNodeModulesBin
 } = require './file-locator'
 
 createMakefiles = (input, output, global, cb) ->
 
     async.waterfall [
         (cb) ->
-            debug 'locateNodeModulesBin'
-            locateNodeModulesBin cb
-
-        (binPath, cb) ->
             debug 'findProjectRoot'
             findProjectRoot (err, projectRoot) ->
                 if err? then return cb err
-                cb null, binPath, projectRoot
+                cb null, projectRoot
 
-        (binPath, projectRoot, featureList, cb) ->
+        (projectRoot, cb) ->
             lakeConfigPath = path.join projectRoot, '.lake', 'config'
             config = require(lakeConfigPath).config
 
@@ -35,7 +30,7 @@ createMakefiles = (input, output, global, cb) ->
             # This can be changed once all parts expect the includes at build/lake
             output ?= path.join lakeConfig.lakePath, 'build'
 
-            for featurePath in featureList
+            for featurePath in input
                 manifest = null
                 try
                     manifestPath = path.join projectRoot, featurePath, 'Manifest'
