@@ -20,6 +20,7 @@ module.exports.createMakefiles = (input, output) ->
     # This can be changed once all parts expect the includes at build/lake
     output ?= path.join lakeConfig.lakePath, 'build'
 
+    process.stdout.write "Generating Makefiles"
     for featurePath in input
         manifest = null
         try
@@ -35,8 +36,10 @@ module.exports.createMakefiles = (input, output) ->
             featurePath: featurePath
             projectRoot: projectRoot
 
-        console.log "Creating .mk file for #{featurePath}"
+        #console.log "Creating .mk file for #{featurePath}"
         createLocalMakefileInc lakeConfig.rules, customConfig, manifest, output
+        process.stdout.write "."
+    console.log ""
     return null
 
 createLocalMakefileInc = (ruleFiles, config, manifest, output) ->

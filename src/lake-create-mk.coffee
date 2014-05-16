@@ -43,5 +43,4 @@ module.exports.build = ->
         console.error err.message
         process.exit 1
     else
-        console.log 'done'
         process.exit 0
