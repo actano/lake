@@ -34,6 +34,6 @@ module.exports.createMakefiles = (input, output, cb) ->
             featurePath: featurePath
             projectRoot: projectRoot
 
-        console.log "Creating .mk file for #{manifest.featurePath}"
+        console.log "Creating .mk file for #{featurePath}"
         createLocalMakefileInc lakeConfig.rules, customConfig, manifest, output
     return null
