@@ -1,58 +1,46 @@
 # Std library
 fs = require 'fs'
 path = require 'path'
-{inspect} = require 'util'
 
 # Third party
-async = require 'async'
 {_} = require 'underscore'
 debug = require('debug')('lake.create_mk')
 
 # Local dep
 RuleBook = require './rulebook'
 
-MANIFEST_FILE_NAME = 'Manifest'
-
-createLocalMakefileInc = (lakeConfig, manifest, output, cb) ->
-    {projectRoot, featurePath} = manifest
-
+module.exports.createLocalMakefileInc = createLocalMakefileInc = (config, manifest, output, cb) ->
     ruleBook = new RuleBook()
     for ruleFile in lakeConfig.rules
         ruleFilePath = path.join projectRoot, ruleFile
         rules = require ruleFilePath
-        rules.addRules lakeConfig, featurePath, manifest, ruleBook
-        
-
-    # close the rule to be on the safe side, regardless if it's closed already
+        rules.addRules config, manifest, ruleBook
     ruleBook.close()
+    ruleBook.getRules()
 
-    stream = createStream lakeConfig, projectRoot, featurePath, output, cb
-
-    writeToStream stream, ruleBook
-    stream.end()
-
-
-createStream = (lakeConfig, projectRoot, featurePath, output, cb) ->
-
-    featureName = path.basename featurePath
-    mkFilePath = path.join path.resolve(projectRoot, output), featureName + '.mk'
-    mkDirectory = path.dirname mkFilePath
-    unless fs.existsSync mkDirectory
-        fs.mkdirSync mkDirectory
-
-    stream = fs.createWriteStream mkFilePath, {encoding: 'utf8'}
+    mkFilePath = getFilename projectRoot, featurePath, output
+    stream = createStream mkFilePath
     stream.on 'error', (err) ->
-        console.error "error while stream to #{mkFilePath}"
         return cb err
-
     stream.once 'finish', ->
         debug 'Makefile stream finished'
         return cb null, mkFilePath
+    writeToStream stream, ruleBook
+    stream.end()
 
+getFilename = (projectRoot, featurePath, output) ->
+    featureName = path.basename featurePath
+    mkFilePath = path.join path.resolve(projectRoot, output), featureName + '.mk'
+    return mkFilePath
+
+createStream = (filename) ->
+    mkDirectory = path.dirname filename
+    unless fs.existsSync mkDirectory
+        fs.mkdirSync mkDirectory
+    stream = fs.createWriteStream filename, {encoding: 'utf8'}
 
 writeToStream = (stream, ruleBook) ->
     for rule in ruleBook.getRules()
-
         rule.dependencies or= []
         # wrap everything into an array and then flatten
         # so user can use string or (nested) array
@@ -71,5 +59,3 @@ writeToStream = (stream, ruleBook) ->
                 stream.write "\t#{actions.join '\n\t'}\n\n"
             else
                 stream.write '\n'
-
-module.exports.createLocalMakefileInc = createLocalMakefileInc
