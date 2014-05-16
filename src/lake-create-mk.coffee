@@ -42,10 +42,10 @@ module.exports.build = ->
         process.exit 0
 
     debug('createMakefiles')
-    createMakefiles parsedArgs.input, parsedArgs.output, (err) ->
-        if err?
-            console.error err.message
-            process.exit 1
-        else
-            console.log 'done'
-            process.exit 0
+    err = createMakefiles parsedArgs.input, parsedArgs.output
+    if err?
+        console.error err.message
+        process.exit 1
+    else
+        console.log 'done'
+        process.exit 0

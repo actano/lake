@@ -27,7 +27,7 @@ module.exports.createMakefiles = (input, output, cb) ->
         catch err
             err.message = "Error in Manifest #{featurePath}: #{err.message}"
             debug err.message
-            return cb err
+            return err
 
         customConfig = _.clone lakeConfig.config
         _.extend customConfig,
@@ -35,7 +35,5 @@ module.exports.createMakefiles = (input, output, cb) ->
             projectRoot: projectRoot
 
         console.log "Creating .mk file for #{manifest.featurePath}"
-        createLocalMakefileInc lakeConfig.rules, customConfig, manifest, output, (err, mkFile) ->
-            if err? then return cb err
-            debug "finished with #{mkFile}"
-        cb null
+        createLocalMakefileInc lakeConfig.rules, customConfig, manifest, output
+    return null
