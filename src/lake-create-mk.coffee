@@ -4,7 +4,6 @@ path = require 'path'
 {inspect} = require 'util'
 
 # Third party
-async = require 'async'
 nopt = require 'nopt'
 debug = require('debug')('local-make')
 
