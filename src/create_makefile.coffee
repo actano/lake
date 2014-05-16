@@ -10,7 +10,7 @@ debug = require('debug')('create-makefile')
 {createLocalMakefileInc} = require './create_mk'
 {findProjectRoot} = require './file-locator'
 
-module.exports.createMakefiles = (input, output, global, cb) ->
+module.exports.createMakefiles = (input, output, cb) ->
     debug 'findProjectRoot'
     projectRoot = findProjectRoot()
     lakeConfigPath = path.join projectRoot, '.lake', 'config'
