@@ -9,16 +9,15 @@ debug = require('debug')('lake.create_mk')
 # Local dep
 RuleBook = require './rulebook'
 
-module.exports.createLocalMakefileInc = createLocalMakefileInc = (config, manifest, output, cb) ->
+module.exports.createLocalMakefileInc = createLocalMakefileInc = (rules, config, manifest, output, cb) ->
     ruleBook = new RuleBook()
-    for ruleFile in lakeConfig.rules
-        ruleFilePath = path.join projectRoot, ruleFile
+    for ruleFile in rules
+        ruleFilePath = path.join config.projectRoot, ruleFile
         rules = require ruleFilePath
         rules.addRules config, manifest, ruleBook
     ruleBook.close()
-    ruleBook.getRules()
 
-    mkFilePath = getFilename projectRoot, featurePath, output
+    mkFilePath = getFilename config.projectRoot, config.featurePath, output
     stream = createStream mkFilePath
     stream.on 'error', (err) ->
         return cb err
