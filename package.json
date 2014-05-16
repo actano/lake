@@ -4,7 +4,8 @@
   "description": "a very oppinionated make-based build tool for complex and modular web applications that run on NodeJS",
   "bin": {
     "lake": "./bin/lake",
-    "lake-create-mk": "./bin/lake-create-mk"
+    "lake-create-mk": "./bin/lake-create-mk",
+    "lake-help": "./bin/lake-help"
   },
   "repository": {
     "type": "git",
