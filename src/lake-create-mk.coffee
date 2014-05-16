@@ -111,13 +111,8 @@ module.exports.build = ->
     [target] = parsedArgs.argv.remain
     target ?= ''
 
-    async.waterfall [
-        (cb) ->
-            debug('createMakefiles')
-            createMakefiles parsedArgs.input, parsedArgs.output, parsedArgs.global, (err) ->
-                cb err
-
-    ], (err, exitCode) ->
+    debug('createMakefiles')
+    createMakefiles parsedArgs.input, parsedArgs.output, parsedArgs.global, (err) ->
         if err?
             console.error err.message
             exitCode or= 1
