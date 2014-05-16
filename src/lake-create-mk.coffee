@@ -1,6 +1,3 @@
-# Std library
-{inspect} = require 'util'
-
 # Third party
 nopt = require 'nopt'
 debug = require('debug')('local-make')
@@ -19,12 +16,11 @@ module.exports.build = ->
         help: String
         version: Boolean
 
-    shortHands = {
+    shortHands =
         i: ['--input']
         o: ['--output']
         h: ['--help']
         v: ['--version']
-    }
 
     parsedArgs = nopt(knownOpts, shortHands, process.argv, 2)
 
@@ -34,10 +30,10 @@ module.exports.build = ->
 
     if parsedArgs.help
         console.log 'USAGE'
-        console.log inspect shortHands
+        console.dir shortHands
         process.exit 0
 
-    debug('createMakefiles')
+    debug 'createMakefiles'
     err = createMakefiles parsedArgs.input, parsedArgs.output
     if err?
         console.error err.message
