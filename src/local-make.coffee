@@ -1,30 +1,31 @@
 path = require 'path'
 {spawn} = require 'child_process'
-_ = require 'underscore'
 
 {findProjectRoot} = require('./file-locator')
 
-module.exports.build = ->
-    target = process.argv[2] ? ''
+module.exports.build = build = ->
     projectRoot = findProjectRoot()
+    featurePath = path.relative projectRoot, process.cwd()
 
     console.log '------------------------------'
     console.log "project root is #{projectRoot}"
 
-    prefix = path.relative projectRoot, process.cwd()
-    target = path.join prefix, target
-    target = '' if target is '.'
-    if target is ''
-        console.log 'building default target'
+    target = process.argv[2]
+    if target
+        target = path.join featurePath, target
     else
+        target = featurePath
+
+    args = ['-C', projectRoot]
+    if target
         console.log "building '#{target}'"
+        args.push target
+    else
+        console.log 'building default target'
 
-    args = _(['-C', projectRoot, target]).compact()
     make = spawn 'make', args
-
     make.stdout.pipe process.stdout
     make.stderr.pipe process.stderr
-
     make.on 'close', (exitCode) ->
         console.log '------------------------------'
         if exitCode isnt 0
@@ -33,3 +34,6 @@ module.exports.build = ->
 
         console.log 'done'
         process.exit exitCode
+
+if require.main is module
+    build()
