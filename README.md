@@ -70,18 +70,6 @@ A JSON file that contains values, that you use in every rule.
 The key **ruleCollection** contains an array with paths to your rules, relative to the *.lake* directory.
 
 
-RuleBook API
---------------
-**addRule(id, tags, fn)**
-* **id** - string - id of the rule, have to be unique, otherwise an exepction will be thrown
-* **tags** - array - tags for the rule, which can be used as a reference in other rules
-* **fn** - function - should return an object with 3 key value pairs
-    * **targets** - array/string - targets, like the *make* targets
-    * **dependencies** - array/string - dependencies, like the *make* dependencies
-    * **actions** - array/string - actions, like the *make* actions
-
-TODO: continue (getRulyById, getRulesByTag, reference inside the *fn*, circular references, workflow, global targets)
-
 Manifest.coffee
 --------
 This file lists various source files that make up different aspects of a particular feature.
