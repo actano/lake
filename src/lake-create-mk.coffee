@@ -2,9 +2,6 @@
 nopt = require 'nopt'
 debug = require('debug')('local-make')
 
-# magic hook for the right coffee stacktrace
-require 'coffee-errors'
-
 # Local dep
 pkg = require '../package'
 {createMakefiles} = require('./create_makefile')
