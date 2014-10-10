@@ -26,10 +26,14 @@
   },
   "readmeFilename": "README.md",
   "dependencies": {
-    "coffee-script": "~1.7.1",
-    "coffee-errors": "~0.8.6",
     "underscore": "~1.4.4",
     "debug": "~0.7.2",
     "nopt": "~2.1.1"
+  },
+  "optionalDependencies": {
+    "coffee-script": "^1.7.1"
+  },
+  "devDependencies": {
+    "coffee-script": "^1.8.0"
   }
 }
