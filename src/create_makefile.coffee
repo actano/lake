@@ -7,18 +7,14 @@ debug = require('debug')('create-makefile')
 {_} = require 'underscore'
 
 # Local dep
-{findProjectRoot} = require './file-locator'
+Config = require './config'
 RuleBook = require './rulebook'
 
 module.exports.createMakefiles = (input, output) ->
-    debug 'findProjectRoot'
-    projectRoot = findProjectRoot()
-    lakeConfigPath = path.join projectRoot, '.lake', 'config'
-    lakeConfig = require(lakeConfigPath)
 
-    # Default output points to current behavior: .lake/build
-    # This can be changed once all parts expect the includes at build/lake
-    output ?= path.join lakeConfig.lakePath, 'build'
+    projectRoot = Config.projectRoot()
+    lakeConfig = Config.config()
+    output ?= path.join lakeConfig.config.lakeOutput
 
     process.stdout.write "Generating Makefiles"
     for featurePath in input

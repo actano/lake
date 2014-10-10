@@ -1,12 +1,12 @@
 path = require 'path'
 fs = require 'fs'
-coffee = require 'coffee-script/register'
-{findProjectRoot} = require './file-locator'
+Config = require './config'
+projectRoot = Config.projectRoot()
 
-getHelpTopics = (projectRoot) ->
+getHelpTopics = ->
     topics = []
 
-    lakeConfig = require path.join projectRoot, '.lake', 'config'
+    lakeConfig = Config.config()
     for ruleFile in lakeConfig.rules
         rule = require path.join projectRoot, ruleFile
 
@@ -20,7 +20,7 @@ getHelpTopics = (projectRoot) ->
 
     return topics
 
-printHelpTopic = (projectRoot, topics, requestedTopic) ->
+printHelpTopic = (topics, requestedTopic) ->
     topicFound = false
 
     for topic in topics
@@ -37,17 +37,15 @@ printHelpTopic = (projectRoot, topics, requestedTopic) ->
     console.log "Help topic '#{requestedTopic}' doesn't exist." if not topicFound
 
 module.exports.help = ->
-    projectRoot = findProjectRoot()
-
     listTopics = (topics) ->
         for topic in topics
             text = '\t' + topic.name
             text += ' - ' + topic.description if topic.description?
             console.log text
 
-    topics = getHelpTopics projectRoot
+    topics = getHelpTopics()
 
-    [node, script, command] = process.argv
+    command = process.argv[2]
 
     if not command?
         console.log "Run 'lake-help [topic]' to show additional information about a specific topic."
@@ -56,4 +54,4 @@ module.exports.help = ->
     else if command == 'topics'
         listTopics topics
     else
-        printHelpTopic projectRoot, topics, command
+        printHelpTopic topics, command

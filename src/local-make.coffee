@@ -1,10 +1,10 @@
 path = require 'path'
 {spawn} = require 'child_process'
 
-{findProjectRoot} = require('./file-locator')
+Config = require './config'
 
 module.exports.build = build = ->
-    projectRoot = findProjectRoot()
+    projectRoot = Config.projectRoot()
     featurePath = path.relative projectRoot, process.cwd()
 
     console.log '------------------------------'
