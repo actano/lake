@@ -4,7 +4,6 @@ fs = require 'fs'
 
 # Third party
 debug = require('debug')('create-makefile')
-{_} = require 'underscore'
 
 # Local dep
 Config = require './config'
@@ -15,6 +14,11 @@ module.exports.createMakefiles = (input, output) ->
     projectRoot = Config.projectRoot()
     lakeConfig = Config.config()
     output ?= path.join lakeConfig.config.lakeOutput
+
+    CustomConfig = (featurePath) ->
+      @featurePath = featurePath
+      @projectRoot = projectRoot
+    CustomConfig.prototype = lakeConfig.config
 
     process.stdout.write "Generating Makefiles"
     for featurePath in input
@@ -27,10 +31,7 @@ module.exports.createMakefiles = (input, output) ->
             debug err.message
             return err
 
-        customConfig = _.clone lakeConfig.config
-        _.extend customConfig,
-            featurePath: featurePath
-            projectRoot: projectRoot
+        customConfig = new CustomConfig(featurePath)
 
         #console.log "Creating .mk file for #{featurePath}"
         createLocalMakefileInc lakeConfig.rules, customConfig, manifest, output
