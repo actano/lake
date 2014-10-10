@@ -11,8 +11,9 @@ loadOldConfig = (root) ->
   p = path.join root, '.lake'
   if fs.existsSync p
     config = require path.join p, 'config'
-  unless config.lakeOutput?
-    config.lakeOutput = path.join p, 'build'
+  unless config.config.lakeOutput?
+    config.config.lakeOutput = path.join p, 'build'
+  return config
 
 loadConfig = (root) ->
   p = path.join root, 'lake.config'
@@ -23,8 +24,9 @@ loadConfig = (root) ->
   return configurator unless configurator instanceof Function
 
   c =
-    lakePath: root
-    lakeOutput: path.join root, 'build', 'lake'
+    config:
+      lakePath: root
+      lakeOutput: path.join root, 'build', 'lake'
   configurator c
   return c
 
