@@ -9,6 +9,17 @@ debug = require('debug')('create-makefile')
 Config = require './config'
 RuleBook = require './rulebook'
 
+_flatten = (result, array) ->
+  for x in array
+    if Array.isArray x
+      _flatten result, x
+    else
+      result.push x
+  return result
+
+flatten = (array) ->
+  _flatten [], array
+
 module.exports.createMakefiles = (input, output) ->
 
     projectRoot = Config.projectRoot()
