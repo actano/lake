@@ -1,7 +1,11 @@
-_config = undefined
-_root = undefined
 path = require 'path'
 fs = require 'fs'
+
+try
+  require 'coffee-script/register'
+
+_config = undefined
+_root = undefined
 
 loadOldConfig = (root) ->
   p = path.join root, '.lake'
