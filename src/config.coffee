@@ -10,19 +10,31 @@ _root = undefined
 loadOldConfig = (root) ->
   p = path.join root, '.lake'
   if fs.existsSync p
-    return require path.join p, 'config'
+    config = require path.join p, 'config'
+  unless config.lakeOutput?
+    config.lakeOutput = path.join p, 'build'
 
 loadConfig = (root) ->
   p = path.join root, 'lake.config'
   try
-    return require p
+    configurator = require p
   catch e
+
+  return configurator unless configurator instanceof Function
+
+  c =
+    lakePath: root
+    lakeOutput: path.join root, 'build', 'lake'
+  configurator c
+  return c
+
 
 findConfig = ->
   currPath = process.cwd().split path.sep
   while currPath.length
     root = "/#{path.join currPath...}"
-    _config = loadConfig(root) || loadOldConfig(root)
+    _config = loadConfig root
+    _config = loadOldConfig root unless _config?
     if _config
       _root = root
       return true
@@ -43,6 +55,3 @@ module.exports =
       return undefined
 
     return _config
-
-if require.main is module
-  console.log module.exports.projectRoot()
