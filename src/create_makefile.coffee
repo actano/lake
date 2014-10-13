@@ -56,6 +56,14 @@ getFilename = (projectRoot, featurePath, output) ->
     mkFilePath = path.join path.resolve(projectRoot, output), featureName + '.mk'
     return mkFilePath
 
+flatten = (array, result = []) ->
+    for x in array
+        if Array.isArray(x)
+            flatten x, result
+        else
+            result.push x
+    result
+
 writeToFile = (filename, ruleBook) ->
     contents = ""
 
@@ -65,7 +73,7 @@ writeToFile = (filename, ruleBook) ->
         # so user can use string or (nested) array
         for prop in ['targets', 'dependencies', 'actions']
             if rule[prop]?
-                rule[prop] = _([ rule[prop] ]).flatten()
+                rule[prop] = flatten [ rule[prop] ]
 
         # print the rule only if a target exists
         # otherwise user created the rule for RuleBook API features
