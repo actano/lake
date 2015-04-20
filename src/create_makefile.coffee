@@ -31,9 +31,13 @@ module.exports.createMakefiles = (input, output) ->
       @projectRoot = projectRoot
     CustomConfig.prototype = lakeConfig.config
 
-    process.stdout.write "Generating Makefiles"
-    for featurePath in input
+    baseLine = 'Generating Makefiles .. '
+
+    process.stdout.write baseLine
+
+    for featurePath, i in input
         manifest = null
+
         try
             manifestPath = path.join projectRoot, featurePath, 'Manifest'
             manifest = require manifestPath
@@ -46,8 +50,11 @@ module.exports.createMakefiles = (input, output) ->
 
         #console.log "Creating .mk file for #{featurePath}"
         createLocalMakefileInc lakeConfig.rules, customConfig, manifest, output
-        process.stdout.write "."
-    console.log ""
+
+        process.stdout.write "\r\x1b[2K#{baseLine}#{i + 1} / #{input.length}"
+    
+    process.stdout.write "\r\x1b[2K#{baseLine}done.\t\t\n"
+
     return null
 
 createLocalMakefileInc = (ruleFiles, config, manifest, output) ->
